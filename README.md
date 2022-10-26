@@ -6,4 +6,6 @@ Access with http://localhost:8001/src/images.php
 
 This exercise runs a small web application that allows to run docker commands.
 
+```make run``` - runs the web server locally.
+
 
