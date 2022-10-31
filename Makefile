@@ -8,7 +8,7 @@ test: ./${TESTS_DIR}
 	date
 
 run:
-	php -S 0.0.0.0:8001
+	PHP_CLI_SERVER_WORKERS=10 php -S 0.0.0.0:8001
 
 
 
