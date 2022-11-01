@@ -1,13 +1,14 @@
 
 
-### php exercise
+## php exercise
+
+### Warning! Work in progress, under construction !!!
 
 This exercise runs a small web application that allows to run docker commands.
 It displays the running containers and existing images in a table, etc. etc.
 
 Run the server with make run, this runs php as a local web server on port 8001
 
-Warning! Work in progress, under construction !!!
 
 ```make run``` - runs the web server locally.
 
