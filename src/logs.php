@@ -34,7 +34,7 @@ Command: <code><?php echo $cmd; ?></code>
 <form action="/src/logs.php">
     <input type="hidden" name="cmd" value="pull"/>
     <input type="hidden" name="id" value="<?php echo $id;?>"/>
-    Logs since: <input name="since" type="input"/>
+    Logs since: <input name="since" value="<?php echo "{$since}";?>" type="input"/>
     <input type="submit" value="Refresh"/>
 </form>
 <p/>
