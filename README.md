@@ -5,7 +5,7 @@
 ### Warning! Work in progress, under construction !!!
 
 This exercise runs a small web application that allows to run docker commands.
-It displays the running containers and existing images in a table, etc. etc.
+It displays the running containers and existing images in a table, allows to inspect entries and view container logs & errors etc. etc.
 
 Run the server with make run, this runs php as a local web server on port 8001
 
