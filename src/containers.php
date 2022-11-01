@@ -33,7 +33,7 @@ function make_state_link($row_val, $json) : string {
     $id = $json["ID"];
     $links = "";
     if ($row_val == "running") {
-        $links = "<a href='/src/attach.php?id={$id}'>/Attach/</a>";
+        //$links = "&nbsp;<a href='/src/attach.php?id={$id}'>/Attach/</a>";
         $links = "{$links}&nbsp;<a href='/src/gen.php?cmd=pause&id={$id}'>/Pause/</a>";
         $links = "{$links}&nbsp; <a href='/src/gen.php?cmd=stop&id={$id}'>/Stop/</a>";
     }
@@ -49,10 +49,10 @@ $runner = new base\Runner("docker ps -a --format='{{json .}}'");
 $json = $runner->run();
 $tbl = new base\FmtTable(array(
     "ID" => array("ID",  __NAMESPACE__ . "\\make_inspect_link"),
+    "State" => array("State", __NAMESPACE__ . "\\make_state_link"),
     "Names" => "Names",
     "Image" => "Image",
     "Labels" => "Labels",
-    "State" => array("State", __NAMESPACE__ . "\\make_state_link"),
     "Status" => "Status",
     "Created At" => "CreatedAt",
     "Running For" => "RunningFor",
