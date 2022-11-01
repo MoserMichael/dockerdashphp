@@ -10,5 +10,10 @@ test: ./${TESTS_DIR}
 run:
 	PHP_CLI_SERVER_WORKERS=10 php -S 0.0.0.0:8001
 
+update: composer.json
+	composer update
+
+install: update
+	composer install
 
 

@@ -3,7 +3,8 @@
     "description": "web interface to access docker",
     "type": "project",
     "require": {
-        "phpunit/phpunit": "8.3.5"
+        "phpunit/phpunit": "8.3.5",
+        "cboden/ratchet": "0.4.4"
     },
     "autoload": {
         "psr-4": {

@@ -71,7 +71,7 @@ function openTerminal() {
     term.write('Connecting...\r\n');
     
     var wsProtocol = location.protocol === 'http:' ? 'ws' : 'wss';
-    var endpoint = wsProtocol + '://' + location.host + '/wssh' + location.search;
+    var endpoint = wsProtocol + '://' + location.host + '/src/wssh.php' + location.search;
     client.connect({
         ws: new WebSocket(endpoint),
         onError: function(error) {
@@ -80,7 +80,7 @@ function openTerminal() {
         onConnect: function() {
             // Erase our connecting message
             // term.write('\x1b[2K\r');
-            this.ws.send( JSON.stringify({'pod_name': pod_name, 'pod_namespace': pod_namespace, 'container_name': container_name}));
+            this.ws.send( JSON.stringify({'docker_container_id': docker_container_id}));
             client.resize(term.cols, term.rows);
         },
         onClose: function() {

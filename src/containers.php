@@ -33,7 +33,9 @@ function make_state_link($row_val, $json) : string {
     $id = $json["ID"];
     $links = "";
     if ($row_val == "running") {
-        $links = "&nbsp;<a href='/src/gen.php?cmd=pause&id={$id}'>/Pause/</a> &nbsp; <a href='/src/gen.php?cmd=stop&id={$id}'>/Stop/</a>";
+        $links = "<a href='/src/attach.php?id={$id}'>/Attach/</a>";
+        $links = "{$links}&nbsp;<a href='/src/gen.php?cmd=pause&id={$id}'>/Pause/</a>";
+        $links = "{$links}&nbsp; <a href='/src/gen.php?cmd=stop&id={$id}'>/Stop/</a>";
     }
     if ($row_val == "paused") {
         $links = "&nbsp;<a href='/src/gen.php?cmd=resume&id={$id}'>/Resume/</a>";
