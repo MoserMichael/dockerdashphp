@@ -2,7 +2,7 @@
 
 class FmtTable {
 
-    private $tbl_def;
+    private array $tbl_def;
 
     public function __construct(array $tbl_def) {
         $this->tbl_def = $tbl_def;
@@ -16,7 +16,6 @@ class FmtTable {
         }
         return $ret . "</thead>";
     }
-
 
     public function format(array $json) : string {
         $ret = $this->show_header();
@@ -68,6 +67,17 @@ class FmtTable {
         $json_pretty = $is_json ? json_encode($data, JSON_PRETTY_PRINT) : implode("\n",$data);
         $json = "<pre>" . $json_pretty . "</pre>";
         return $ret . "<tr>" . $this->add_td("", $json) . "</tr>" . "</table>";
+    }
+
+    public function echo_from_generator(\Generator $gen) : void {
+        echo $this->show_header();
+        echo "<tr><td><pre>\n";
+
+        foreach($gen as $line) {
+            echo $line;
+        }
+
+        echo "\n</pre></td></tr></table>";
     }
 
 }

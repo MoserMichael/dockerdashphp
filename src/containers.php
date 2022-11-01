@@ -26,7 +26,7 @@ function make_inspect_link($row_val, $json) : string {
     if ($json["State"]=="running") {
         $ps="&nbsp; <a href='gen.php?cmd=top&id={$row_val}'>/top/</a> &nbsp; <a href='/src/gen.php?cmd=stats&id={$row_val}'>/stats/</a>";
     }
-    return "<a title='inspect' href='/src/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/src/gen.php?cmd=logs&id={$row_val}'>/logs/</a>{$ps}";
+    return "<a title='inspect' href='/src/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/src/logs.php?id={$row_val}&since=10m'>/logs/</a>{$ps}";
 }
 
 function make_state_link($row_val, $json) : string {

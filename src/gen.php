@@ -16,7 +16,7 @@ require_once __DIR__ . "/base/runner.php";
 require_once __DIR__ . "/base/fmttable.php";
 
 $cmd_def=array(
-    'logs' => array('docker logs --timestamps %s', "logs", "Container Logs", False),
+    'logs' => array('docker logs --timestamps %s 2>&1 | sort -k 1', "logs", "Container Logs", False),
     'inspectc' => array("docker inspect %s --format='{{json .}}'", "Inspect", "Return low-level information on Container object", True),
     'inspecti' => array("docker inspect %s --format='{{json .}}'", "Inspect", "Return low-level information on Image object", True),
     'stats' => array("docker stats -a --no-stream %s", "Container stats", "Resource Usage Statistics", False),
@@ -47,7 +47,6 @@ Command: <code><?php echo $cmd_str; ?></code>
 <?php
 
 $runner = new base\Runner($cmd_str, $is_json);
-
 $json = $runner->run();
 $tbl = new base\FmtTable(array(
     $tbl_title => $tbl_title,

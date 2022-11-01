@@ -1,6 +1,8 @@
 <?php namespace base;
 
-function endsWith( $haystack, $needle ) {
+use phpDocumentor\Reflection\Types\Resource_;
+
+function endsWith($haystack, $needle ) {
     $length = strlen( $needle );
     if( !$length ) {
         return true;
@@ -8,28 +10,66 @@ function endsWith( $haystack, $needle ) {
     return substr( $haystack, -$length ) === $needle;
 }
 
+class TmpFileRunner
+{
+    private string $command;
+    private $res;
+    private $outFile;
+
+    public function __construct(string $command)
+    {
+        $this->command = $command . " 2>&1";
+    }
+
+    public function run() : void {
+        $this->delete();
+
+        $descriptorSpec = array(
+            1 => array("pipe", "w"),
+        );
+        $this->res = proc_open($this->command, $descriptorSpec, $pipes);
+        if (is_resource($this->res)) {
+            $this->outFile = $pipes[1];
+        }
+    }
+
+    public function lineGenerator() : \Generator {
+
+        if ($this->outFile != null) {
+            while (($line = fgets($this->outFile)) !== false) {
+                yield $line;
+            }
+
+            $this->delete();
+        }
+    }
+
+    public function delete() : void {
+        if (is_resource($this->res)) {
+            fclose($this->outFile);
+            proc_close($this->res);
+
+            $this->outFile = null;
+            $this->res = null;
+        }
+    }
+}
+
+
 class Runner {
 
-    private $command;
-    private $dump;
-    private $is_json;
+    private string $command;
+    private bool $dump;
+    private bool $is_json;
 
-    public function __construct(string $command, $is_json=True, $dump=False) {
-
-        $is_background = False;
-        if (endsWith($command, '&')) {
-            $command = rtrim($command);
-            $is_background = True;
-        }
+    public function __construct(string $command, $is_json=True) {
         $this->command = $command . " 2>&1";
-        if ($is_background) {
-            $command = $command . " &";
-        }
         $this->is_json = $is_json;
-        $this->dump = $dump;
+        $this->dump = false;
     }
 
     public function run() {
+
         $output = shell_exec($this->command);
         if ($output == null) {
             $output = "\n";
