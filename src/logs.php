@@ -22,6 +22,8 @@ $cmd = "docker logs --timestamps ". escapeshellarg($id);
 if ($since != "") {
     $cmd = $cmd . " --since " . escapeshellarg($since);
 }
+
+$cmd = $cmd . " 2>&1 | sort -k 1";
 ?>
 
 <h3>Container Logs</h3>
@@ -42,7 +44,6 @@ Empty value means 'get all logs'
 
 <?php
 
-$cmd = $cmd . " | sort -k 1";
 $runner = new base\TmpFileRunner($cmd);
 $json = $runner->run();
 $tbl = new base\FmtTable(array(
