@@ -38,7 +38,7 @@ Command: <code><?php echo $cmd; ?></code>
     <input type="submit" value="Refresh"/>
 </form>
 <p/>
-For format of the field description of --since option <a href="https://docs.docker.com/engine/reference/commandline/logs/">[link]</a>
+For possible values see the description of --since option in the documentation <a href="https://docs.docker.com/engine/reference/commandline/logs/">[link]</a>
 Empty value means 'get all logs'
 <p/>
 
