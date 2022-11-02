@@ -52,7 +52,6 @@ $tbl = new base\FmtTable(array(
     "State" => array("State", __NAMESPACE__ . "\\make_state_link"),
     "Names" => "Names",
     "Image" => "Image",
-    "Labels" => "Labels",
     "Status" => "Status",
     "Created At" => "CreatedAt",
     "Running For" => "RunningFor",
@@ -62,6 +61,7 @@ $tbl = new base\FmtTable(array(
     "Disk Size" => "Size",
     "Attached Networks" => "Networks",
     "Exposed Ports" => "Ports",
+    "Labels" => "Labels",
 ));
 
 echo $tbl->format($json);
