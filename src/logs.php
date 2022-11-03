@@ -17,10 +17,15 @@ require_once __DIR__ . "/base/fmttable.php";
 
 $id = $_GET['id'];
 $since = @$_GET['since'];
+$until = @$_GET['until'];
+
 $cmd = "docker logs --timestamps ". escapeshellarg($id);
 
 if ($since != "") {
     $cmd = $cmd . " --since " . escapeshellarg($since);
+}
+if ($until != "") {
+    $cmd = $cmd . " --until " . escapeshellarg($until);
 }
 
 $cmd = $cmd . " 2>&1 | sort -k 1";
@@ -34,12 +39,40 @@ Command: <code><?php echo $cmd; ?></code>
 <form action="/src/logs.php">
     <input type="hidden" name="cmd" value="pull"/>
     <input type="hidden" name="id" value="<?php echo $id;?>"/>
-    Logs since: <input name="since" value="<?php echo "{$since}";?>" type="input"/>
-    <input type="submit" value="Refresh"/>
+    <table style="">
+        <tr>
+            <td>
+                Logs since:
+            </td>
+            <td>
+                <input name="since" value="<?php echo "{$since}";?>" type="input"/>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                Logs until:
+            </td>
+            <td>
+                <input name="until" value="<?php echo "{$until}";?>" type="input"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <input type="submit" value="Refresh"/>
+            </td>
+        </tr>
+    </table>
+
 </form>
 <p/>
-For possible values see the description of --since option in the documentation <a href="https://docs.docker.com/engine/reference/commandline/logs/">[link]</a>
-Empty value means 'get all logs'
+
+Values of since and until:
+<ul>
+<li>Empty value means earliest for 'Logs since' and latest for 'Logs until'</li>
+<li>Relative values for relative value back in time (15m - 15 minutes ago 2h - two hours ago, Can combine 3h30m40s</li>
+<li>Absolute timestamp like 2006-01-02, or 2006-01-02T15:04:05 . / <a href="https://docs.docker.com/engine/reference/commandline/logs/">full description</a></li>
+</ul>
+
 <p/>
 
 <?php
