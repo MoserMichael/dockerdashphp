@@ -16,7 +16,9 @@ $id = $_GET['id'];
 
         <?php include( __DIR__ . "/static-files/css.css"); ?>
         <css>
-        <?php include( __DIR__ . "/static-files/lib/xterm.css"); ?>
+        <style>
+        <?php include( __DIR__ . "/static-files/xterm/lib/xterm.css"); ?>
+        </style>
         </css>
     </head>
     <body>

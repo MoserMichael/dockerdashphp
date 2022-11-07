@@ -2,6 +2,25 @@
 
 use phpDocumentor\Reflection\Types\Resource_;
 
+
+function runAndReturnPipes(string $cmd) : array {
+
+    // run docker attach
+    $descriptorSpec = array(
+        0 => array("pipe", "r"),
+        1 => array("pipe", "w"),
+        2 => array("pipe", "w"),
+    );
+
+    // "docker exec -ti {$id} /bin/sh"
+    $res = proc_open($cmd , $descriptorSpec, $pipes);
+    if ($res === false || !is_resource($res)) {
+        echo "Error: Can't run ${cmd}";
+        exit(0);
+    }
+    return array($res,$pipes);
+}
+
 function endsWith($haystack, $needle ) {
     $length = strlen( $needle );
     if( !$length ) {

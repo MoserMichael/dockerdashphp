@@ -25,7 +25,7 @@ final class TableTest extends TestCase
 HERE;
 
         $result_data = <<<HERE
-<th>ID</th><th>Repository</th><th>Tag</th><th>Created At</th>
+<table class="js-sort-table"><thead><th>ID</th><th>Repository</th><th>Tag</th><th>Created At</th></thead>
 <tr><td>dc4cb6ed97b0</td><td>crane</td><td>test-v3.6.12-73369</td><td>2022-10-19 13:41:29 +0300 IDT</td>
 </tr>
 <tr><td>337263471e43</td><td>crane</td><td>test-v3.6.12-72788</td><td>2022-10-19 13:37:21 +0300 IDT</td>
@@ -35,12 +35,19 @@ HERE;
 <tr><td>157095baba98</td><td>docker/getting-started</td><td>latest</td><td>2022-04-11 18:25:34 +0300 IDT</td>
 </tr>
 <tr><td>96204f82e534</td><td>quay.io/mmoser/s9k-mm</td><td>latest</td><td>2020-08-09 02:10:26 +0300 IDT</td>
-</tr>
+</tr></table>
 HERE;
 
         $tbl_json = base\Slurp($table_data);
         $runner = new base\FmtTable($table_def);
         $result = $runner->format($tbl_json);
+
+        /*
+        echo "***";
+        echo $result;
+        echo "***";
+        */
+
         $this->assertEquals($result, $result_data);
     }
 }
