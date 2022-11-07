@@ -20,7 +20,9 @@ final class RunnerTest extends TestCase
         $runner = new base\Runner("docker pull fedora", False);
         $ret = $runner->run();
 
-        list ($ret, $pipes) = base\runAndReturnPipes("docker run -i fedora /bin/sh");
+        // running with -t gives you an error: "the input device is not a TTY" - that's bad, can't do the device in a web browser trick...
+        $cmd = "docker run -i fedora /bin/sh";
+        list ($ret, $pipes) = base\runAndReturnPipes($cmd);
         $this->assertTrue(is_resource($ret));
 
         $this->assertTrue(get_resource_type($pipes[0]) == "stream");
@@ -35,8 +37,7 @@ final class RunnerTest extends TestCase
 
         $cmdRes = fread($pipes[1],1024);
 
-
-        $res = fwrite($pipes[0],"exit\r\n");
+        $res = fwrite($pipes[0],"exit\n");
         $this->assertFalse($res === false);
 
 
