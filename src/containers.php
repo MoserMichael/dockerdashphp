@@ -29,10 +29,10 @@ function make_inspect_link($row_val, $json) : string {
 
     $id = $json["ID"];
 
-    //$ps = "${ps}&nbsp;<a href='/src/attach.php?id={$id}'><br/><b>/Console/</b></a>";
-    //return "<a title='inspect' href='/src/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/src/logs.php?id={$row_val}&since=10m'>/logs/</a>{$ps}";
+    $ps = "${ps}&nbsp;<a href='/src/attach.php?id={$id}'><br/><b>/Console/</b></a>";
+    return "<a title='inspect' href='/src/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/src/logs.php?id={$row_val}&since=10m'>/logs/</a>{$ps}";
 
-    return "<a title='inspect' href='/src/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/src/logs.php?id={$row_val}&since=10m'>/logs/</a>";
+    //return "<a title='inspect' href='/src/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/src/logs.php?id={$row_val}&since=10m'>/logs/</a>";
 
 }
 
