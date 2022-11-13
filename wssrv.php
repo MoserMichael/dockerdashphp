@@ -189,6 +189,7 @@ class DockerSocketHandler {
 
     private ConnectionInterface $clientConnection; // web socket
     private $dockerSocket; // docker socket
+    private $component;
     private int $state;
     private string $dataBuffer;
     private int $msgType;
@@ -197,8 +198,9 @@ class DockerSocketHandler {
     const State_ParseDockerMessageHeader = 4;
     const State_ParseDockerMessageBody = 4;
 
-    public function __construct(ConnectionInterface $clientConnection, $dockerSocket) {
+    public function __construct($component, ConnectionInterface $clientConnection, $dockerSocket) {
 
+        $this->component = $component;
         $this->clientConnection = $clientConnection;
         $this->dockerSocket = $dockerSocket;
         $this->state = self::State_ParseDockerMessageHeader;
@@ -213,6 +215,10 @@ class DockerSocketHandler {
                 $len = strlen($this->dataBuffer);
                 if ($len < $msgSize) {
                     $data = fread($socket, $msgSize - $len);
+                    if ($data === false) {
+                        $this->close();
+                        return;
+                    }
                     $this->dataBuffer = $this->dataBuffer . $data;
                 }
                 if (strlen($this->dataBuffer) >= $msgSize) {
@@ -230,6 +236,7 @@ class DockerSocketHandler {
                     $toRead = $this->msgLen - $len;
                     $buf = fread($socket, $toRead);
                     if ($buf === false) {
+                        $this->close();
                         return;
                     }
                     $this->dataBuffer = $this->dataBuffer . $buf;
@@ -249,17 +256,31 @@ class DockerSocketHandler {
         }
     }
 
+    public function close() {
+        $this->component->onClose($this->clientConnection);
+    }
+
+    public function getDockerSocker() {
+        return $this->dockerSocket;
+    }
+    public function doClose() {
+        $this->sendToClient("Connection Closed");
+        fclose($this->dockerSocket);
+        $this->clientConnection->close();
+    }
+
+
     // send data to websocket (input data has been read from docker connection)
     private function sendToClient($msg) {
         $arr = array("data" => $msg);
         $json_data = json_encode($arr);
-        $this->clientConnection->send($json_data);
+        $this->clientConnection->send($json_data); // how do I check that it succeeded?
     }
 
 
     // send data to docker socket (input data has been read from web socket)
     public function sendToDocker($msg) {
-        fwrite($this->dockerSocket, $msg);
+        return fwrite($this->dockerSocket, $msg);
     }
 }
 
@@ -275,30 +296,35 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
         $this->loop = $loop;
     }
 
-    function onOpen(ConnectionInterface $conn)
-    {
+    function onOpen(ConnectionInterface $conn) {
         fwrite(STDERR,"onOpen\n");
     }
 
-    function onClose(\Ratchet\ConnectionInterface $conn)
-    {
+    function onClose(ConnectionInterface $clientConn) {
         fwrite(STDERR,"onClose\n");
+        $objId = spl_object_id($clientConn);
+        if (array_key_exists($objId, $this->mapConnToHandler)) {
+            $handler = $this->mapConnToHandler[$objId];
+            $this->loop->removeReadStream($handler->getDockerSocker());
+            $handler->doClose();
+            unset($this->mapConnToHandler[$objId]);
+        }
     }
 
-    function onError(ConnectionInterface $conn, \Exception $e)
-    {
+    function onError(ConnectionInterface $conn, \Exception $e) {
         fwrite(STDERR,"onError\n");
     }
 
-    function onMessage(ConnectionInterface $clientConn, $msg)
-    {
-        fwrite(STDERR,"onMessage: " . $msg . "\n");
+    function onMessage(ConnectionInterface $clientConn, $msg) {
+        //fwrite(STDERR,"onMessage: " . $msg . "\n");
 
         $objId = spl_object_id($clientConn);
         if (!array_key_exists($objId, $this->mapConnToHandler)) {
             $state = $this->openDocker($msg, $clientConn);
             if ($state != null) {
                 $this->mapConnToHandler[ $objId ] = $state;
+            } else {
+                $clientConn->close();
             }
         } else {
             $handler = $this->mapConnToHandler[ $objId ];
@@ -317,8 +343,9 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
 
             $data = $ret['data'];
 
-            //$handler->sendToClient($data);
-            $handler->sendToDocker($data);
+            if ($handler->sendToDocker($data) === false) {
+                onClose($clientConnection);
+            }
         }
     }
 
@@ -328,7 +355,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
         $ret = json_decode($msg, true);
         if ($ret == null) {
             echo "Error: wrong connect command has been received";
-            return;
+            return null;
         }
         $containerId = $ret['docker_container_id'];
 
@@ -338,7 +365,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
 
         if ($socketHandshake->run() === true) {
             try {
-                $socketState = new DockerSocketHandler($clientConnection, $sock);
+                $socketState = new DockerSocketHandler($this, $clientConnection, $sock);
                 $this->loop->addReadStream($sock, function ($sock) use ($socketState) {
                     $socketState->handleData($sock);
                 });
