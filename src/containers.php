@@ -23,13 +23,18 @@ require_once __DIR__ . "/base/fmttable.php";
 function make_inspect_link($row_val, $json) : string {
 
     $ps="";
-    if ($json["State"]=="running") {
+    $state = $json["State"];
+    if ($state == "running") {
         $ps="&nbsp; <a href='gen.php?cmd=top&id={$row_val}'>/top/</a> &nbsp; <a href='/src/gen.php?cmd=stats&id={$row_val}'>/stats/</a>";
     }
 
     $id = $json["ID"];
 
-    $ps = "${ps}&nbsp;<a href='/src/attach.php?id={$id}'><br/><b>/Console/</b></a>";
+    $ps = "";
+    if ($state == "running") {
+        $ps = "{$ps}&nbsp;<a href='/src/attach.php?id={$id}'><br/><b>/Console/</b></a>";
+    }
+
     return "<a title='inspect' href='/src/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/src/logs.php?id={$row_val}&since=10m'>/logs/</a>{$ps}";
 
     //return "<a title='inspect' href='/src/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/src/logs.php?id={$row_val}&since=10m'>/logs/</a>";
@@ -39,7 +44,7 @@ function make_inspect_link($row_val, $json) : string {
 function make_state_link($row_val, $json) : string {
     $id = $json["ID"];
     $links = "";
-    if ($row_val == "running") {
+    if ($json["State"] == "running") {
         $links = "{$links}&nbsp;<a href='/src/gen.php?cmd=pause&id={$id}'>/Pause/</a>";
         $links = "{$links}&nbsp; <a href='/src/gen.php?cmd=stop&id={$id}'>/Stop/</a>";
     }
