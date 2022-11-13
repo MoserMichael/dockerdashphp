@@ -7,13 +7,8 @@ test: ./${TESTS_DIR}
 	./vendor/bin/phpunit ${PHPUNIT_FLAGS} --configuration ./${TESTS_DIR}/phpunit.xml $</$(patsubst $(TESTS_DIR)/%,%,$(TEST_FILE))
 	date
 
-run: runphpsrv
-
-runphpsrv:
-	PHP_CLI_SERVER_WORKERS=10 php -S 0.0.0.0:8001
-
-runwss:
-	php wssrv.php 8002 
+run:
+	./run.sh
 
 update: composer.json
 	composer update
