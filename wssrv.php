@@ -215,7 +215,7 @@ class DockerSocketHandler {
                 $len = strlen($this->dataBuffer);
                 if ($len < $msgSize) {
                     $data = fread($socket, $msgSize - $len);
-                    if ($data === false) {
+                    if ($data === false || $data === "") {
                         $this->close();
                         return;
                     }
@@ -235,7 +235,7 @@ class DockerSocketHandler {
                 if ($len < $this->msgLen) {
                     $toRead = $this->msgLen - $len;
                     $buf = fread($socket, $toRead);
-                    if ($buf === false) {
+                    if ($buf === false || $buf === "") {
                         $this->close();
                         return;
                     }
@@ -264,7 +264,6 @@ class DockerSocketHandler {
         return $this->dockerSocket;
     }
     public function doClose() {
-        $this->sendToClient("Connection Closed");
         fclose($this->dockerSocket);
         $this->clientConnection->close();
     }
