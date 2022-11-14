@@ -16,7 +16,4 @@ update: composer.json
 install: update
 	composer install
 
-container-build:
-	docker build -f Dockerfile -t ghcr.io/mosermichael/phpdocker-mm:latest . 2>&1 | tee container-build.log
-
 
