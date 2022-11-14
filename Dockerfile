@@ -11,9 +11,13 @@ RUN apt-get update
 RUN apt-get install git -y
 
 # run composer
-RUN php composer-setup.php update
-RUN php composer-setup.php install
+
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 COPY . /usr/src/myapp
 WORKDIR /usr/src/myapp
+
+RUN php /composer.phar update
+RUN php /composer.phar install
+
 CMD [ "/bin/bash", "-c", "./run.sh" ]
