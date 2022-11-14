@@ -1,4 +1,5 @@
 
+# Warning, work in progress!!!
 
 ## php exercise
 
@@ -28,5 +29,6 @@ The [example](https://docs.docker.com/engine/api/sdk/examples/) shows the follow
 Now doing that would force me to do my own HTTP parsing as well (and maybe also WebSocket parsing too!) lets try:
 
 Now If I use the docker engine api for all commands, then I would be able to host this project in a docker container, that's probably the next step...
+However the docker command line seems to have undergone fewer changes than the REST api...
 
 
