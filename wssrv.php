@@ -22,6 +22,11 @@ class DockerSocketHttpHandshake {
     const EOF_HDR = "\r\n\r\n";
     const EOF_LINE = "\r\n";
 
+    private static $dockerApiVersion = "v1.41";
+
+    public static function setApiVersion(string $version) : void {
+        self::$dockerApiVersion = $version;
+    }
 
     public function __construct($sock, string $containerId) {
         $this->sock = $sock;
@@ -124,7 +129,8 @@ class DockerSocketHttpHandshake {
         $json = json_encode($jsonArr);
         $jsonLen = strlen($json);
 
-        $execRequest = "POST /v1.41/exec/{$idExec}/start HTTP/1.1\r\n" .
+        $ver = self::$dockerApiVersion;
+        $execRequest = "POST /{$ver}/exec/{$idExec}/start HTTP/1.1\r\n" .
             "Host: localhost\r\nContent-Length: {$jsonLen}\r\nUpgrade: tcp\r\nConnection: Upgrade\r\nAccept: */*\r\nContent-Type: application/json\r\n\r\n{$json}";
 
         fwrite($this->sock, $execRequest);
@@ -159,8 +165,10 @@ class DockerSocketHttpHandshake {
         );
         $json = json_encode($jsonArr);
         $jsonLen = strlen($json);
+
+        $ver = self::$dockerApiVersion;
         $createExecInstanceRequest
-            = "POST /v1.41/containers/{$this->containerId}/exec HTTP/1.1\r\n" .
+            = "POST /{$ver}/containers/{$this->containerId}/exec HTTP/1.1\r\n" .
             "Host: localhost\r\nContent-Length: {$jsonLen}\r\nAccept: */*\r\nContent-Type: application/json\r\n\r\n{$json}";
 
         $len = strlen($createExecInstanceRequest);
@@ -396,6 +404,12 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
 $listenPort = 8002;
 if (array_key_exists(1, $argv)) {
     $listenPort = intval($argv[1]);
+}
+
+if (array_key_exists(2, $argv)) {
+
+    DockerSocketHttpHandshake::setApiVersion($argv[1]);
+
 }
 
 $docker = new WebsocketToTerminalComponent();
