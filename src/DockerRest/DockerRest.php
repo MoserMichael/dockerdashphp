@@ -256,8 +256,8 @@ class DockerBinaryStream {
     private int $msgType;
     private int $msgLen;
 
-    const State_ParseDockerMessageHeader = 4;
-    const State_ParseDockerMessageBody = 4;
+    const State_ParseDockerMessageHeader = 1;
+    const State_ParseDockerMessageBody = 2;
 
     public function __construct($dockerSocket, DockerBinaryStreamHandler $streamHandler) {
 
@@ -269,12 +269,15 @@ class DockerBinaryStream {
 
     // read data from docker socket
     public function handleData() : void {
+
         switch($this->state) {
             case self::State_ParseDockerMessageHeader:
                 $msgSize = 8;
                 $len = strlen($this->dataBuffer);
                 if ($len < $msgSize) {
-                    $data = fread($this->dockerSocket, $msgSize - $len);
+                    $toread = $msgSize - $len;
+                    $data = fread($this->dockerSocket, $toread);
+
                     if ($data === false || $data === "") {
                         $this->close();
                         return;
@@ -286,6 +289,7 @@ class DockerBinaryStream {
                     $msg = unpack("C*", $hdr);
                     $this->msgType = $msg[1];
                     $this->msgLen = $msg[8] + ($msg[7] << 8) + ($msg[6] << 16) + ($msg[5] << 24);
+
                     $this->state = static::State_ParseDockerMessageBody;
                     $this->dataBuffer = substr($this->dataBuffer, $msgSize);
                 }
@@ -295,6 +299,7 @@ class DockerBinaryStream {
                 if ($len < $this->msgLen) {
                     $toRead = $this->msgLen - $len;
                     $buf = fread($this->dockerSocket, $toRead);
+
                     if ($buf === false || $buf === "") {
                         $this->close();
                         return;
@@ -307,12 +312,15 @@ class DockerBinaryStream {
                     // consume the buffer!
                     if ($len == $this->msgLen) {
                         $this->streamHandler->onMessage($this->dataBuffer);
+                        $this->dataBuffer = "";
                     } else {
                         $msg = substr($this->dataBuffer, $this->msgLen);
                         $this->streamHandler->onMessage($msg);
+                        $this->dataBuffer = substr($this->dataBuffer, $this->msgLen);
                     }
-                    $this->dataBuffer = substr($this->dataBuffer, $this->msgLen);
+                    $this->state = static::State_ParseDockerMessageHeader;
                 }
+                break;
         }
     }
 

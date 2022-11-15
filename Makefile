@@ -8,7 +8,7 @@ test: ./${TESTS_DIR}
 	date
 
 run:
-	./run.sh
+	./run.sh 2>&1 | tee run.log
 
 update: composer.json
 	composer update
