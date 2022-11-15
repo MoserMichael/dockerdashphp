@@ -26,9 +26,9 @@ Maybe you could solve this using the "docker engine api" - https://docs.docker.c
 
 Interesting detail: Curl can send http requests via a unix socket, didn't know that:
 The [example](https://docs.docker.com/engine/api/sdk/examples/) shows the following way to do ```docker ps``` : ```curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/json```
-Now doing that would force me to do my own HTTP parsing as well (and maybe also WebSocket parsing too!) lets try:
+Now doing that would force me to do my own HTTP parsing as well lets try:
 
-Now If I use the docker engine api for all commands, then I would be able to host this project in a docker container, that's probably the next step...
+Now If I use the docker engine api for all commands, then I would be able to host this project in a docker container, that's probably the next step... (that's because I can mount the unix socket /var/run/docker.sock into the file system of the docker)
 However the docker command line seems to have undergone fewer changes than the REST api...
 
 
