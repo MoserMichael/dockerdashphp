@@ -2,14 +2,16 @@
 
 use GuzzleHttp\Psr7\Message;
 
-class HttpHandler {
+class HttpHandler
+{
 
     const EOF_HDR = "\r\n\r\n";
     const EOF_LINE = "\r\n";
     protected $sock;
     protected string $buffer;
 
-    public function __construct($sock) {
+    public function __construct($sock)
+    {
         $ret = stream_set_blocking($sock, false);
         if ($ret === false) {
             fwrite(STDERR, "Can't set stream to non blocking mode\n");
@@ -17,12 +19,14 @@ class HttpHandler {
         $this->sock = $sock;
         $this->buffer = "";
     }
-    
-    public function getSocket() {
+
+    public function getSocket()
+    {
         return $this->sock;
     }
 
-    public function readHttpResponse() {
+    public function readHttpResponse()
+    {
         $hdr = $this->readHttpResponseHeader();
         $body = false;
         if ($hdr != null) {
@@ -31,8 +35,9 @@ class HttpHandler {
         return array($hdr, $body);
     }
 
-    protected function readHttpResponseHeader() {
-        while(true) {
+    protected function readHttpResponseHeader()
+    {
+        while (true) {
             if (!$this->readSocket()) {
                 return null;
             }
@@ -47,7 +52,8 @@ class HttpHandler {
         }
     }
 
-    protected function parseTransferEncodingBody($hdr) {
+    protected function parseTransferEncodingBody($hdr)
+    {
         $requestData = "";
 
         $httpHeaderValue = null;
@@ -55,12 +61,12 @@ class HttpHandler {
             $httpHeaderValue = $hdr->getHeader("Transfer-Encoding");
         }
 
-        if ($httpHeaderValue != null && array_key_exists(0, $httpHeaderValue)  && $httpHeaderValue[0] == "chunked") {
+        if ($httpHeaderValue != null && array_key_exists(0, $httpHeaderValue) && $httpHeaderValue[0] == "chunked") {
 
             $hasChunkLen = false;
             $len = 0;
 
-            while(True) {
+            while (True) {
                 if ($this->buffer == "") {
                     if (!$this->readSocket()) {
                         return false;
@@ -98,7 +104,8 @@ class HttpHandler {
         return $requestData;
     }
 
-    private function readSocket() {
+    private function readSocket()
+    {
         $r = array($this->sock);
         $w = array();
         $e = array();
@@ -233,5 +240,108 @@ class DockerEngineApi extends HttpHandler {
         }
         return true;
     }
+}
+
+interface DockerBinaryStreamHandler {
+    public function onMessage($data);
+    public function onClose();
+}
+
+class DockerBinaryStream {
+
+    private DockerBinaryStreamHandler $streamHandler;
+    private $dockerSocket; // docker socket
+    private int $state;
+    private string $dataBuffer;
+    private int $msgType;
+    private int $msgLen;
+
+    const State_ParseDockerMessageHeader = 4;
+    const State_ParseDockerMessageBody = 4;
+
+    public function __construct($dockerSocket, DockerBinaryStreamHandler $streamHandler) {
+
+        $this->dockerSocket = $dockerSocket;
+        $this->streamHandler = $streamHandler;
+        $this->state = self::State_ParseDockerMessageHeader;
+        $this->dataBuffer = "";
+    }
+
+    // read data from docker socket
+    public function handleData() : void {
+        switch($this->state) {
+            case self::State_ParseDockerMessageHeader:
+                $msgSize = 8;
+                $len = strlen($this->dataBuffer);
+                if ($len < $msgSize) {
+                    $data = fread($this->dockerSocket, $msgSize - $len);
+                    if ($data === false || $data === "") {
+                        $this->close();
+                        return;
+                    }
+                    $this->dataBuffer = $this->dataBuffer . $data;
+                }
+                if (strlen($this->dataBuffer) >= $msgSize) {
+                    $hdr = substr($this->dataBuffer, 0, $msgSize);
+                    $msg = unpack("C*", $hdr);
+                    $this->msgType = $msg[1];
+                    $this->msgLen = $msg[8] + ($msg[7] << 8) + ($msg[6] << 16) + ($msg[5] << 24);
+                    $this->state = static::State_ParseDockerMessageBody;
+                    $this->dataBuffer = substr($this->dataBuffer, $msgSize);
+                }
+            //fallthrough
+            case static::State_ParseDockerMessageBody:
+                $len = strlen($this->dataBuffer);
+                if ($len < $this->msgLen) {
+                    $toRead = $this->msgLen - $len;
+                    $buf = fread($this->dockerSocket, $toRead);
+                    if ($buf === false || $buf === "") {
+                        $this->close();
+                        return;
+                    }
+                    $this->dataBuffer = $this->dataBuffer . $buf;
+                }
+                $len = strlen($this->dataBuffer);
+                if ($len >= $this->msgLen) {
+
+                    // consume the buffer!
+                    if ($len == $this->msgLen) {
+                        $this->streamHandler->onMessage($this->dataBuffer);
+                    } else {
+                        $msg = substr($this->dataBuffer, $this->msgLen);
+                        $this->streamHandler->onMessage($msg);
+                    }
+                    $this->dataBuffer = substr($this->dataBuffer, $this->msgLen);
+                }
+        }
+    }
+
+    public function close() {
+        $this->streamHandler->onClose();
+    }
+
+    public function getDockerSocker() {
+        return $this->dockerSocket;
+    }
+    public function doClose() {
+        fclose($this->dockerSocket);
+        //$this->clientConnection->close();
+    }
+
+
+    /*
+    // send data to websocket (input data has been read from docker connection)
+    private function sendToClient($msg) {
+        $arr = array("data" => $msg);
+        $json_data = json_encode($arr);
+        $this->clientConnection->send($json_data); // how do I check that it succeeded?
+    }
+    */
+
+    // send data to docker socket (input data has been read from web socket)
+    public function sendToDocker($msg) {
+        return fwrite($this->dockerSocket, $msg);
+    }
 
 }
+

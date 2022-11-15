@@ -4,6 +4,8 @@ require_once __DIR__ . "/src/base/runner.php";
 require_once __DIR__ . "/src/DockerRest/DockerRest.php";
 
 use \DockerRest\DockerEngineApi;
+use \DockerRest\DockerBinaryStreamHandler;
+use \DockerRest\DockerBinaryStream;
 
 use React\EventLoop\LoopInterface;
 use React\EventLoop\Loop;
@@ -14,101 +16,36 @@ use Ratchet\Http\HttpServer;
 use Ratchet\WebSocket\WsServer;
 use Ratchet\ConnectionInterface;
 
-class DockerSocketHandler {
 
-    private ConnectionInterface $clientConnection; // web socket
-    private $dockerSocket; // docker socket
+class DockerBinaryStreamCtx implements DockerBinaryStreamHandler {
+
     private $component;
-    private int $state;
-    private string $dataBuffer;
-    private int $msgType;
-    private int $msgLen;
+    private $clientConnection;
+    private DockerBinaryStream $stream;
 
-    const State_ParseDockerMessageHeader = 4;
-    const State_ParseDockerMessageBody = 4;
-
-    public function __construct($component, ConnectionInterface $clientConnection, $dockerSocket) {
-
+    public function __construct($dockerSocket, $component, $clientConnection) {
         $this->component = $component;
         $this->clientConnection = $clientConnection;
-        $this->dockerSocket = $dockerSocket;
-        $this->state = self::State_ParseDockerMessageHeader;
-        $this->dataBuffer = "";
+        $this->stream = new DockerBinaryStream($dockerSocket, $this);
     }
 
-    // read data from docker socket
-    public function handleData($socket) : void {
-        switch($this->state) {
-            case self::State_ParseDockerMessageHeader:
-                $msgSize = 8;
-                $len = strlen($this->dataBuffer);
-                if ($len < $msgSize) {
-                    $data = fread($socket, $msgSize - $len);
-                    if ($data === false || $data === "") {
-                        $this->close();
-                        return;
-                    }
-                    $this->dataBuffer = $this->dataBuffer . $data;
-                }
-                if (strlen($this->dataBuffer) >= $msgSize) {
-                    $hdr = substr($this->dataBuffer, 0, $msgSize);
-                    $msg = unpack("C*", $hdr);
-                    $this->msgType = $msg[1];
-                    $this->msgLen = $msg[8] + ($msg[7] << 8) + ($msg[6] << 16) + ($msg[5] << 24);
-                    $this->state = static::State_ParseDockerMessageBody;
-                    $this->dataBuffer = substr($this->dataBuffer, $msgSize);
-                }
-                //fallthrough
-            case static::State_ParseDockerMessageBody:
-                $len = strlen($this->dataBuffer);
-                if ($len < $this->msgLen) {
-                    $toRead = $this->msgLen - $len;
-                    $buf = fread($socket, $toRead);
-                    if ($buf === false || $buf === "") {
-                        $this->close();
-                        return;
-                    }
-                    $this->dataBuffer = $this->dataBuffer . $buf;
-                }
-                $len = strlen($this->dataBuffer);
-                if ($len >= $this->msgLen) {
-
-                    // consume the buffer!
-                    if ($len == $this->msgLen) {
-                        $this->sendToClient($this->dataBuffer);
-                    } else {
-                        $msg = substr($this->dataBuffer, $this->msgLen);
-                        $this->sendToClient($msg);
-                    }
-                    $this->dataBuffer = substr($this->dataBuffer, $this->msgLen);
-                }
-        }
+    public function handleData() : void {
+        $this->stream->handleData();
     }
 
-    public function close() {
-        $this->component->onClose($this->clientConnection);
-    }
-
-    public function getDockerSocker() {
-        return $this->dockerSocket;
-    }
-    public function doClose() {
-        fclose($this->dockerSocket);
-        $this->clientConnection->close();
-    }
-
-
-    // send data to websocket (input data has been read from docker connection)
-    private function sendToClient($msg) {
+    public function onMessage($msg) {
         $arr = array("data" => $msg);
         $json_data = json_encode($arr);
         $this->clientConnection->send($json_data); // how do I check that it succeeded?
     }
 
+    public function onClose() {
+        $this->component->onClose($this->clientConnection);
+    }
 
     // send data to docker socket (input data has been read from web socket)
     public function sendToDocker($msg) {
-        return fwrite($this->dockerSocket, $msg);
+        return $this->stream->sendToDocker($msg);
     }
 }
 
@@ -203,7 +140,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
 
         if ($socketHandshake->exec($containerId) === true) {
             try {
-                $socketState = new DockerSocketHandler($this, $clientConnection, $sock);
+                $socketState = new DockerBinaryStreamCtx($sock, $this, $clientConnection);
                 $this->loop->addReadStream($sock, function ($sock) use ($socketState) {
                     $socketState->handleData($sock);
                 });
