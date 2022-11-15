@@ -2,16 +2,13 @@
 
 use GuzzleHttp\Psr7\Message;
 
-class HttpHandler
-{
-
+class HttpHandler {
     const EOF_HDR = "\r\n\r\n";
     const EOF_LINE = "\r\n";
     protected $sock;
     protected string $buffer;
 
-    public function __construct($sock)
-    {
+    public function __construct($sock) {
         $ret = stream_set_blocking($sock, false);
         if ($ret === false) {
             fwrite(STDERR, "Can't set stream to non blocking mode\n");
@@ -20,13 +17,11 @@ class HttpHandler
         $this->buffer = "";
     }
 
-    public function getSocket()
-    {
+    public function getSocket() {
         return $this->sock;
     }
 
-    public function readHttpResponse()
-    {
+    public function readHttpResponse() {
         $hdr = $this->readHttpResponseHeader();
         $body = false;
         if ($hdr != null) {
@@ -35,8 +30,7 @@ class HttpHandler
         return array($hdr, $body);
     }
 
-    protected function readHttpResponseHeader()
-    {
+    protected function readHttpResponseHeader() {
         while (true) {
             if (!$this->readSocket()) {
                 return null;
@@ -52,8 +46,7 @@ class HttpHandler
         }
     }
 
-    protected function parseTransferEncodingBody($hdr)
-    {
+    protected function parseTransferEncodingBody($hdr) {
         $requestData = "";
 
         $httpHeaderValue = null;
@@ -104,8 +97,7 @@ class HttpHandler
         return $requestData;
     }
 
-    private function readSocket()
-    {
+    private function readSocket() {
         $r = array($this->sock);
         $w = array();
         $e = array();
@@ -119,7 +111,6 @@ class HttpHandler
         $this->buffer = $this->buffer . $ret;
         return true;
     }
-
 }
 
 class DockerEngineApi extends HttpHandler {
@@ -129,7 +120,6 @@ class DockerEngineApi extends HttpHandler {
     public static function setApiVersion(string $version) : void {
         self::$dockerApiVersion = $version;
     }
-
 
     public function __construct() {
 
@@ -248,7 +238,6 @@ interface DockerBinaryStreamHandler {
 }
 
 class DockerBinaryStream {
-
     private DockerBinaryStreamHandler $streamHandler;
     private $dockerSocket; // docker socket
     private int $state;
@@ -256,14 +245,14 @@ class DockerBinaryStream {
     private int $msgType;
     private int $msgLen;
 
-    const State_ParseDockerMessageHeader = 1;
-    const State_ParseDockerMessageBody = 2;
+    const StateParseDockerMessageHeader = 1;
+    const StateParseDockerMessageBody = 2;
 
     public function __construct($dockerSocket, DockerBinaryStreamHandler $streamHandler) {
 
         $this->dockerSocket = $dockerSocket;
         $this->streamHandler = $streamHandler;
-        $this->state = self::State_ParseDockerMessageHeader;
+        $this->state = self::StateParseDockerMessageHeader;
         $this->dataBuffer = "";
     }
 
@@ -271,7 +260,7 @@ class DockerBinaryStream {
     public function handleData() : void {
 
         switch($this->state) {
-            case self::State_ParseDockerMessageHeader:
+            case self::StateParseDockerMessageHeader:
                 $msgSize = 8;
                 $len = strlen($this->dataBuffer);
                 if ($len < $msgSize) {
@@ -290,11 +279,11 @@ class DockerBinaryStream {
                     $this->msgType = $msg[1];
                     $this->msgLen = $msg[8] + ($msg[7] << 8) + ($msg[6] << 16) + ($msg[5] << 24);
 
-                    $this->state = static::State_ParseDockerMessageBody;
+                    $this->state = static::StateParseDockerMessageBody;
                     $this->dataBuffer = substr($this->dataBuffer, $msgSize);
                 }
             //fallthrough
-            case static::State_ParseDockerMessageBody:
+            case static::StateParseDockerMessageBody:
                 $len = strlen($this->dataBuffer);
                 if ($len < $this->msgLen) {
                     $toRead = $this->msgLen - $len;
@@ -318,7 +307,7 @@ class DockerBinaryStream {
                         $this->streamHandler->onMessage($msg);
                         $this->dataBuffer = substr($this->dataBuffer, $this->msgLen);
                     }
-                    $this->state = static::State_ParseDockerMessageHeader;
+                    $this->state = static::StateParseDockerMessageHeader;
                 }
                 break;
         }
@@ -336,16 +325,6 @@ class DockerBinaryStream {
         fclose($this->dockerSocket);
         //$this->clientConnection->close();
     }
-
-
-    /*
-    // send data to websocket (input data has been read from docker connection)
-    private function sendToClient($msg) {
-        $arr = array("data" => $msg);
-        $json_data = json_encode($arr);
-        $this->clientConnection->send($json_data); // how do I check that it succeeded?
-    }
-    */
 
     // send data to docker socket (input data has been read from web socket)
     public function sendToDocker($msg) {

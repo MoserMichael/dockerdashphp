@@ -81,6 +81,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
             $this->loop->removeReadStream($handler->getDockerSocker());
             $handler->doClose();
             unset($this->mapConnToHandler[$objId]);
+            $clientConn->close();
         }
     }
 
@@ -117,7 +118,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
             $data = $ret['data'];
 
             if ($handler->sendToDocker($data) === false) {
-                onClose($clientConnection);
+                $this->onClose($clientConnection);
             }
         }
     }
