@@ -5,6 +5,8 @@ use GuzzleHttp\Psr7\Message;
 class HttpHandler {
     const EOF_HDR = "\r\n\r\n";
     const EOF_LINE = "\r\n";
+    const TRACE = false;  // set to on for tracing of requests/responses
+
     protected $sock;
     protected string $buffer;
 
@@ -19,6 +21,75 @@ class HttpHandler {
 
     public function getSocket() {
         return $this->sock;
+    }
+
+    public const MethodGet  = 1;
+    public const MethodHead = 2;
+    public const MethodPost = 3;
+    public const MethodPut  = 4;
+    public const MethodDelete  = 5;
+    public const MethodConnect = 6;
+    public const MethodOptions = 7;
+    public const MethodTrace = 8;
+    public const MethodPatch = 9;
+
+    const MethodNames  = array(
+        self::MethodGet => "GET",
+        self::MethodHead => "HEAD",
+        self::MethodPost => "POST",
+        self::MethodPut => "PUT",
+        self::MethodDelete => "DELETE",
+        self::MethodConnect => "CONNECT",
+        self::MethodOptions => "OPTIONS",
+        self::MethodTrace => "TRACE",
+        self::MethodPatch => "PATCH",
+    );
+
+    protected function sendCommonRequest(string $url,
+                                         array $requestData = null,
+                                         int $expectedStatus = 200,
+                                         int $method = self::MethodPost,
+                                         string $customHdr = "") : array {
+        if ($this->sendHeaderCommon($url, $requestData, $method, $customHdr)) {
+            $hdr = $this->readHttpResponseHeader();
+            if ($hdr != null) {
+                $stat = $hdr->getStatusCode();
+                if ($stat == $expectedStatus) {
+                    $body = $this->parseTransferEncodingBody($hdr);
+                    return array($hdr, $body);
+                }
+                $stat = $hdr->getStatusCode();
+                fwrite(STDERR, "Status {$stat} not expected for {$url}\n");
+            }
+        }
+        return array(false, null);
+    }
+
+    protected function sendHeaderCommon(string $url, array $request = null, int $method = self::MethodPost, $customHdr="") : bool {
+        $json = "";
+        $contentLen = "";
+
+        if ($request != null) {
+            $json = json_encode($request);
+            $jsonLen = strlen($json);
+            $contentLen = "Content-Length: {$jsonLen}\r\n";
+        }
+
+        $methodName = self::MethodNames[$method];
+        $requestText
+            = "{$methodName} {$url} HTTP/1.1\r\n" .
+            "Host: localhost\r\n{$contentLen}Accept: */*\r\nContent-Type: application/json{$customHdr}\r\n\r\n{$json}";
+
+        if (self::TRACE) {
+            fwrite(STDERR, "Request\n=======\n{$requestText}\n");
+        }
+
+        $len = strlen($requestText);
+        if (fwrite($this->sock, $requestText) !== $len) {
+            fwrite(STDERR, "Can't send {$urlCommonPart} http request to docker socket\n");
+            return false;
+        }
+        return true;
     }
 
     public function readHttpResponse() {
@@ -39,7 +110,11 @@ class HttpHandler {
             $pos = strpos($this->buffer, self::EOF_HDR);
             if (!($pos === false)) {
                 $msg = substr($this->buffer, 0, $pos + strlen(self::EOF_HDR));
-                
+
+                if (self::TRACE) {
+                    fwrite(STDERR, "Response\n========\n{$msg}\n");
+                }
+
                 $ret = Message::parseResponse($msg); // strange parser
                 $this->buffer = substr($this->buffer, $pos + strlen(self::EOF_HDR));
                 return $ret;
@@ -48,15 +123,17 @@ class HttpHandler {
     }
 
     protected function parseTransferEncodingBody($hdr) {
-        $requestData = "";
+        $responseData = "";
 
         $httpHeaderValue = null;
         if ($hdr->hasHeader("Transfer-Encoding")) {
             $httpHeaderValue = $hdr->getHeader("Transfer-Encoding");
         }
 
-        if ($httpHeaderValue != null && array_key_exists(0, $httpHeaderValue) && $httpHeaderValue[0] == "chunked") {
-
+        if ($httpHeaderValue != null &&
+            array_key_exists(0, $httpHeaderValue) &&
+            $httpHeaderValue[0] == "chunked") {
+            
             $hasChunkLen = false;
             $len = 0;
 
@@ -72,7 +149,7 @@ class HttpHandler {
                         $msg = substr($this->buffer, 0, $pos);
                         $len = hexdec($msg);
                         $this->buffer = substr($this->buffer, $pos + strlen(self::EOF_LINE));
-
+                        
                         if ($len == 0) {
                             break;
                         }
@@ -89,13 +166,18 @@ class HttpHandler {
                                 $this->buffer = substr($this->buffer, strlen(self::EOF_LINE));
                             }
                         }
-                        $requestData = $requestData . $chunkData;
+                        $responseData = $responseData . $chunkData;
                         $hasChunkLen = false;
                     }
                 }
             }
         }
-        return $requestData;
+
+        if (self::TRACE) {
+            fwrite(STDERR, "Body\n{$responseData}\n");
+        }
+
+        return $responseData;
     }
 
     private function readSocket() {

@@ -23,7 +23,7 @@ class DockerBinaryStream {
     // read data from docker socket
     public function handleData() : void {
 
-    switch($this->state) {
+        switch($this->state) {
         case self::StateParseDockerMessageHeader:
             $msgSize = 8;
             $len = strlen($this->dataBuffer);

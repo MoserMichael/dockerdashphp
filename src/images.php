@@ -24,7 +24,6 @@ function make_inspect_link($row_val,$json) : string {
     $rmi="<a href='/src/gen.php?cmd=rmi&id={$row_val}'>/remove image/</a>";
     $run="<a href='/src/run.php?ID={$image}'>/run/</a>";
 
-
     return "<a title='inspect' href='/src/gen.php?cmd=inspecti&id={$row_val}'>{$row_val}</a>&nbsp;{$rmi}&nbsp;{$run}";
 }
 
