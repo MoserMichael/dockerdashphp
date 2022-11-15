@@ -47,6 +47,14 @@ class DockerBinaryStreamCtx implements DockerBinaryStreamHandler {
     public function sendToDocker($msg) {
         return $this->stream->sendToDocker($msg);
     }
+
+    public function getDockerSocker() {
+        return $this->stream->getDockerSocker();
+    }
+
+    public function doClose() {
+        $this->stream->doClose();
+    }
 }
 
 class WebsocketToTerminalComponent implements MessageComponentInterface {

@@ -323,6 +323,7 @@ class DockerBinaryStream {
     public function getDockerSocker() {
         return $this->dockerSocket;
     }
+    
     public function doClose() {
         fclose($this->dockerSocket);
         //$this->clientConnection->close();
