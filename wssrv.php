@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . "/vendor/autoload.php";
-require_once __DIR__ . "/src//base/runner.php";
+require_once __DIR__ . "/src/base/runner.php";
+require_once __DIR__ . "/src/DockerRest/DockerRest.php";
+
+use \DockerRest\DockerEngineApi;
 
 use React\EventLoop\LoopInterface;
 use React\EventLoop\Loop;
@@ -10,188 +13,6 @@ use Ratchet\MessageComponentInterface;
 use Ratchet\Http\HttpServer;
 use Ratchet\WebSocket\WsServer;
 use Ratchet\ConnectionInterface;
-
-use GuzzleHttp\Psr7\Message;
-
-
-class DockerSocketHttpHandshake {
-    private $sock;
-    private string $containerId;
-    private string $buffer;
-
-    const EOF_HDR = "\r\n\r\n";
-    const EOF_LINE = "\r\n";
-
-    private static $dockerApiVersion = "v1.41";
-
-    public static function setApiVersion(string $version) : void {
-        self::$dockerApiVersion = $version;
-    }
-
-    public function __construct($sock, string $containerId) {
-        $this->sock = $sock;
-        $this->containerId = $containerId;
-        $this->buffer = "";
-    }
-
-    public function send($data) {
-        fwrite($this->sock, $data);
-    }
-
-    public function run() : bool {
-        $id = $this->execCreate("/bin/sh");
-        if ($id != null) {
-            return $this->execUpgrade($id);
-        }
-        return false;
-    }
-
-    private function execCreate($shellPath) {
-        $this->sendExecCreateRequest($shellPath);
-
-        $hdr = $this->readHttpResponse();
-        if ($hdr == null) {
-            fwrite(STDERR, "Can't parse http header for exec create request\n");
-            return null;
-        }
-        if ($hdr->getStatusCode() == 201) {
-
-            $requestData = $this->parseTransferEncodingBody($hdr);
-
-            $arr = json_decode($requestData, true);
-            if (!array_key_exists("Id", $arr)) {
-                return null;
-            }
-            return $arr["Id"];
-        }
-    }
-
-    private function parseTransferEncodingBody($hdr) {
-        $requestData = "";
-        if ($hdr->hasHeader("Transfer-Encoding") && $hdr->getHeader("Transfer-Encoding")[0] == "chunked") {
-
-            $hasChunkLen = false;
-            $len = 0;
-
-            while(True) {
-                if ($this->buffer == "") {
-                    if (!$this->readSocket()) {
-                        return;
-                    }
-                }
-                if (!$hasChunkLen) {
-                    $pos = strpos($this->buffer, self::EOF_LINE);
-                    if (!($pos === false)) {
-                        $msg = substr($this->buffer, 0, $pos);
-                        $len = hexdec($msg);
-                        $this->buffer = substr($this->buffer, $pos + strlen(self::EOF_LINE));
-
-                        if ($len == 0) {
-                            break;
-                        }
-                        $hasChunkLen = true;
-                    }
-                }
-                if ($hasChunkLen) {
-                    if (strlen($this->buffer) >= $len) {
-                        $chunkData = substr($this->buffer, 0, $len);
-                        $this->buffer = substr($this->buffer, $len);
-                        if (strlen($this->buffer) >= strlen(self::EOF_LINE)) {
-                            $str = substr($this->buffer, 0, strlen(self::EOF_LINE));
-                            if ($str == self::EOF_LINE) {
-                                $this->buffer = substr($this->buffer, strlen(self::EOF_LINE));
-                            }
-                        }
-                        $requestData = $requestData . $chunkData;
-                        $hasChunkLen = false;
-                    }
-                }
-            }
-        }
-        return $requestData;
-    }
-
-    private function execUpgrade($idExec) : bool {
-        $this->sendExecUpgradeRequest($idExec);
-        $hdr = $this->readHttpResponse();
-        if ($hdr == null) {
-            fwrite(STDERR, "Can't parse http header for exec exec request\n");
-            return false;
-        }
-        return $hdr->getStatusCode() == 101;
-    }
-
-    private function sendExecUpgradeRequest($idExec) : bool {
-        $jsonArr = array(
-            "id" => $idExec,
-            "ExecStartConfig" => array("Tty" => true),
-        );
-        $json = json_encode($jsonArr);
-        $jsonLen = strlen($json);
-
-        $ver = self::$dockerApiVersion;
-        $execRequest = "POST /{$ver}/exec/{$idExec}/start HTTP/1.1\r\n" .
-            "Host: localhost\r\nContent-Length: {$jsonLen}\r\nUpgrade: tcp\r\nConnection: Upgrade\r\nAccept: */*\r\nContent-Type: application/json\r\n\r\n{$json}";
-
-        fwrite($this->sock, $execRequest);
-        return true;
-    }
-
-    private function readHttpResponse() {
-        while(true) {
-            if (!$this->readSocket()) {
-                return null;
-            }
-
-            $pos = strpos($this->buffer, self::EOF_HDR);
-            if (!($pos === false)) {
-                $msg = substr($this->buffer, 0, $pos + strlen(self::EOF_HDR));
-                $ret = Message::parseResponse($msg); // strange parser
-                $this->buffer = substr($this->buffer, $pos + strlen(self::EOF_HDR));
-                return $ret;
-            }
-        }
-    }
-
-    private function sendExecCreateRequest(string $shell) {
-        $jsonArr = array(
-            "id" => $this->containerId,
-            "AttachStdin" => true,
-            "AttachStdout" => true,
-            "AttachStderr" => true,
-            "DetachKeys" => "ctrl-p,ctrl-q",
-            "Tty" => true,
-            "Cmd" =>  array($shell)
-        );
-        $json = json_encode($jsonArr);
-        $jsonLen = strlen($json);
-
-        $ver = self::$dockerApiVersion;
-        $createExecInstanceRequest
-            = "POST /{$ver}/containers/{$this->containerId}/exec HTTP/1.1\r\n" .
-            "Host: localhost\r\nContent-Length: {$jsonLen}\r\nAccept: */*\r\nContent-Type: application/json\r\n\r\n{$json}";
-
-        $len = strlen($createExecInstanceRequest);
-        if (fwrite($this->sock, $createExecInstanceRequest) !== $len) {
-            fwrite(STDERR, "Can't send initial http request to docker socket\n");
-        }
-    }
-
-    private function readSocket() {
-        $r = array($this->sock);
-        $w = array();
-        $e = array();
-
-        stream_select($r, $w, $e, null);
-
-        $ret = fread($this->sock, 4096);
-        if ($ret === false) {
-            return false;
-        }
-        $this->buffer = $this->buffer . $ret;
-        return true;
-    }
-}
 
 class DockerSocketHandler {
 
@@ -330,9 +151,9 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
             $state = $this->openDocker($msg, $clientConn);
             if ($state != null) {
                 $this->mapConnToHandler[ $objId ] = $state;
-            } else {
+            } /*else {
                 $clientConn->close();
-            }
+            }*/
         } else {
             $handler = $this->mapConnToHandler[ $objId ];
             $this->dataMessage($msg, $clientConn, $handler);
@@ -364,13 +185,23 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
             echo "Error: wrong connect command has been received";
             return null;
         }
+
+        if (!array_key_exists('docker_container_id', $ret)) {
+            fwrite(STDERR, "docker_container_id - NOT KEY\n");
+            return null;
+        }
         $containerId = $ret['docker_container_id'];
 
-        $sock = $this->connectDockerSocket($containerId);
+        $socketHandshake = new DockerEngineApi();
 
-        $socketHandshake = new DockerSocketHttpHandshake($sock, $containerId);
+        $sock = $socketHandshake->getSocket();
+        if ($sock === false) {
+            fwrite(STDERR, "not socket\n");
+            $clientConnection->close();
+            return;
+        }
 
-        if ($socketHandshake->run() === true) {
+        if ($socketHandshake->exec($containerId) === true) {
             try {
                 $socketState = new DockerSocketHandler($this, $clientConnection, $sock);
                 $this->loop->addReadStream($sock, function ($sock) use ($socketState) {
@@ -380,36 +211,23 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
             } catch (Exception $ex) {
                 fwrite(STDERR, "can't add handlers {$ex}. very bad.\n");
             }
+        } else {
+            fwrite(STDERR, "handshake failed\n");
         }
         return null;
-    }
-
-    private function connectDockerSocket(string $containerId) {
-
-        $sock = fsockopen("unix:///var/run/docker.sock");
-        if ($sock === false) {
-            fwrite(STDERR, "Can't connect docker socket\n");
-            return false;
-        }
-
-        $ret = stream_set_blocking($sock, false);
-        if ($ret === false) {
-            fwrite(STDERR, "Can't set stream to non blocking mode\n");
-            return false;
-        }
-        return $sock;
     }
 }
 
 $listenPort = 8002;
 if (array_key_exists(1, $argv)) {
     $listenPort = intval($argv[1]);
+    echo "port: {$listenPort}\n";
 }
 
 if (array_key_exists(2, $argv)) {
-
-    DockerSocketHttpHandshake::setApiVersion($argv[1]);
-
+    $v = $argv[2];
+    echo "set api {$v}\n";
+    DockerEngineApi::setApiVersion($argv[2]);
 }
 
 $docker = new WebsocketToTerminalComponent();
