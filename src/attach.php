@@ -1,9 +1,10 @@
 <?php
 
-$id = $_GET['id'];
+require_once __DIR__ . "/hdr.php";
 
-//fork and start websocket listener
-//$cmd = "docker exec -ti ${id} /bin/bash";
+show_hdr(-1);
+
+$id = $_GET['id'];
 
 ?>
 

@@ -21,12 +21,23 @@ class DockerBinaryStreamCtx implements DockerBinaryStreamHandler {
 
     private $component;
     private $clientConnection;
+    private string $execId;
     private DockerBinaryStream $stream;
 
-    public function __construct($dockerSocket, $component, $clientConnection) {
+
+    public function __construct($dockerSocket, $component, $execId, $clientConnection) {
         $this->component = $component;
         $this->clientConnection = $clientConnection;
+        $this->execId = $execId;
         $this->stream = new DockerBinaryStream($dockerSocket, $this);
+    }
+
+    public function getExecId() : string {
+        return $this->execId;
+    }
+
+    public function getSocket() {
+        return $this->stream->getSocket();
     }
 
     public function handleData() : void {
@@ -38,6 +49,8 @@ class DockerBinaryStreamCtx implements DockerBinaryStreamHandler {
         $json_data = json_encode($arr);
         $this->clientConnection->send($json_data); // how do I check that it succeeded?
     }
+
+
 
     public function onClose() {
         $this->component->onClose($this->clientConnection);
@@ -94,12 +107,16 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
 
         $objId = spl_object_id($clientConn);
         if (!array_key_exists($objId, $this->mapConnToHandler)) {
-            $state = $this->openDocker($msg, $clientConn);
+
+            list($state, $close) = $this->openDocker($msg, $clientConn);
             if ($state != null) {
                 $this->mapConnToHandler[ $objId ] = $state;
-            } /*else {
+                return;
+            }
+            if ($close) {
                 $clientConn->close();
-            }*/
+            }
+
         } else {
             $handler = $this->mapConnToHandler[ $objId ];
             $this->dataMessage($msg, $clientConn, $handler);
@@ -121,47 +138,53 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
                 $this->onClose($clientConnection);
             }
         }
+
+        if (array_key_exists("cols", $ret) && array_key_exists("rows", $ret)) {
+            $http = new DockerEngineApi();
+            $http->execResize($handler->getExecId(), intval($ret['rows']), intval($ret['cols']));
+        }
     }
 
     private function openDocker($msg, ConnectionInterface $clientConnection) {
-
         // get docker id from client request
         $ret = json_decode($msg, true);
         if ($ret == null) {
-            echo "Error: wrong connect command has been received";
-            return null;
+            echo "Error: input is not json";
+            return array(null, true);
         }
 
         if (!array_key_exists('docker_container_id', $ret)) {
             fwrite(STDERR, "docker_container_id - NOT KEY\n");
-            return null;
+            return array(null, false);
         }
+
         $containerId = $ret['docker_container_id'];
-
         $socketHandshake = new DockerEngineApi();
-
         $sock = $socketHandshake->getSocket();
-        if ($sock === false) {
-            fwrite(STDERR, "not socket\n");
-            $clientConnection->close();
-            return;
-        }
 
-        if ($socketHandshake->exec($containerId) === true) {
-            try {
-                $socketState = new DockerBinaryStreamCtx($sock, $this, $clientConnection);
-                $this->loop->addReadStream($sock, function ($sock) use ($socketState) {
-                    $socketState->handleData($sock);
-                });
-                return $socketState;
-            } catch (Exception $ex) {
-                fwrite(STDERR, "can't add handlers {$ex}. very bad.\n");
+        if (!($sock === false)) {
+
+            list($state, $execId) = $socketHandshake->exec($containerId);
+            if ($state === true) {
+                try {
+                    $socketState = new DockerBinaryStreamCtx($sock, $this, $execId, $clientConnection);
+                    $this->loop->addReadStream($sock, function ($sock) use ($socketState) {
+                        $socketState->handleData($sock);
+                    });
+                    return array($socketState, false);
+                } catch (Exception $ex) {
+                    fwrite(STDERR, "can't add handlers {$ex}. very bad.\n");
+                }
+            } else {
+                fwrite(STDERR, "handshake failed\n");
             }
         } else {
-            fwrite(STDERR, "handshake failed\n");
+            fwrite(STDERR, "not socket, docker not running\n");
+            $clientConnection->close();
         }
-        return null;
+        return array(null, true);
     }
+
 }
 
 $listenPort = 8002;
