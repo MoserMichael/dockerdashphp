@@ -166,12 +166,10 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
 $listenPort = 8002;
 if (array_key_exists(1, $argv)) {
     $listenPort = intval($argv[1]);
-    echo "port: {$listenPort}\n";
 }
 
 if (array_key_exists(2, $argv)) {
     $v = $argv[2];
-    echo "set api {$v}\n";
     DockerEngineApi::setApiVersion($argv[2]);
 }
 
