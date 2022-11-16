@@ -6,6 +6,7 @@ class HttpHandler {
     const EOF_HDR = "\r\n\r\n";
     const EOF_LINE = "\r\n";
     const TRACE = false;  // set to on for tracing of requests/responses
+    const TRACE_CHUNK = false;  // set to on for tracing of requests/responses
 
     protected $sock;
     protected string $buffer;
@@ -138,25 +139,31 @@ class HttpHandler {
             $len = 0;
 
             while (True) {
-                if ($this->buffer == "") {
-                    if (!$this->readSocket()) {
-                        return false;
-                    }
-                }
+
                 if (!$hasChunkLen) {
                     $pos = strpos($this->buffer, self::EOF_LINE);
                     if (!($pos === false)) {
                         $msg = substr($this->buffer, 0, $pos);
                         $len = hexdec($msg);
                         $this->buffer = substr($this->buffer, $pos + strlen(self::EOF_LINE));
-                        
+
+                        if (self::TRACE_CHUNK) {
+                            fwrite(STDERR, "chunk-len: {$len}\n");
+                        }
+
                         if ($len == 0) {
                             break;
                         }
                         $hasChunkLen = true;
+                    } else {
+                        if (!$this->readSocket()) {
+                            fwrite(STDERR, "socket read error\n");
+                            return false;
+                        }
                     }
-                }
-                if ($hasChunkLen) {
+                } else if ($hasChunkLen) {
+
+                    // did we read the chunk - consume the chunk
                     if (strlen($this->buffer) >= $len) {
                         $chunkData = substr($this->buffer, 0, $len);
                         $this->buffer = substr($this->buffer, $len);
@@ -168,13 +175,21 @@ class HttpHandler {
                         }
                         $responseData = $responseData . $chunkData;
                         $hasChunkLen = false;
+                    } else {
+                        if (!$this->readSocket()) {
+                            fwrite(STDERR, "socket read error\n");
+                            return false;
+                        }
                     }
                 }
+
+
             }
         }
 
-        if (self::TRACE) {
-            fwrite(STDERR, "Body\n{$responseData}\n");
+        if (self::TRACE_CHUNK) {
+            $l = strlen($responseData);
+            fwrite(STDERR, "Body-len {$l}\n");
         }
 
         return $responseData;
@@ -191,6 +206,7 @@ class HttpHandler {
         if ($ret === false) {
             return false;
         }
+        $l = strlen($ret);
         $this->buffer = $this->buffer . $ret;
         return true;
     }

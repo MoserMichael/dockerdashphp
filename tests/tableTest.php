@@ -3,7 +3,7 @@
 use PHPUnit\Framework\TestCase;
 
 require_once dirname(__DIR__) . '/src/base/fmttable.php';
-require_once dirname(__DIR__) . '/src/base/Slurp.php';
+require_once dirname(__DIR__) . '/src/base/runner.php';
 
 final class TableTest extends TestCase
 {

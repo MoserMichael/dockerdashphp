@@ -193,11 +193,6 @@ if (array_key_exists(1, $argv)) {
     $listenPort = intval($argv[1]);
 }
 
-if (array_key_exists(2, $argv)) {
-    $v = $argv[2];
-    DockerEngineApi::setApiVersion($argv[2]);
-}
-
 $docker = new WebsocketToTerminalComponent();
 $loop = Loop::get();
 $server = IoServer::factory(

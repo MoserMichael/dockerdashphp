@@ -5,8 +5,7 @@ require_once __DIR__ . "/Http.php";
 class DockerEngineApi extends HttpHandler {
 
     private static $dockerApiVersion = "v1.41";
-
-
+    
     public static function setApiVersion(string $version) : void {
         self::$dockerApiVersion = $version;
     }
@@ -18,6 +17,12 @@ class DockerEngineApi extends HttpHandler {
                 fwrite(STDERR, "Can't connect docker socket\n");
             }
         }
+
+        $api = getenv("DOCKER_API_VERSION");
+        if ($api !== false) {
+            self::$dockerApiVersion = $api;
+        }
+
         parent::__construct($sock);
     }
 
@@ -33,6 +38,30 @@ class DockerEngineApi extends HttpHandler {
     public function containersList() : string {
         $ver = self::$dockerApiVersion;
         $url = "/{$ver}/containers/json?all=true&size=true";
+        list($hdr, $body) = $this->sendCommonRequest($url, null, 200, self::MethodGet );
+        return $body;
+    }
+
+    //*** docker info
+    public function info() : string {
+        $ver = self::$dockerApiVersion;
+        $url = "/{$ver}/info";
+        list($hdr, $body) = $this->sendCommonRequest($url, null, 200, self::MethodGet );
+        return $body;
+    }
+
+    //*** docker version
+    public function version() : string {
+        $ver = self::$dockerApiVersion;
+        $url = "/{$ver}/version";
+        list($hdr, $body) = $this->sendCommonRequest($url, null, 200, self::MethodGet );
+        return $body;
+    }
+
+    //*** docker info
+    public function df() : string {
+        $ver = self::$dockerApiVersion;
+        $url = "/{$ver}/system/df";
         list($hdr, $body) = $this->sendCommonRequest($url, null, 200, self::MethodGet );
         return $body;
     }
@@ -94,7 +123,6 @@ class DockerEngineApi extends HttpHandler {
         list($hdr, $body) = $this->sendCommonRequest($url, $jsonArr, 101, self::MethodPost, $customHdr);
         return $hdr !== null;        
     }
-
 }
 
 

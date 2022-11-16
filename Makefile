@@ -4,7 +4,8 @@ SRC_DIR := src
 TESTS_DIR := tests
 
 test: ./${TESTS_DIR}
-	./vendor/bin/phpunit ${PHPUNIT_FLAGS} --configuration ./${TESTS_DIR}/phpunit.xml $</$(patsubst $(TESTS_DIR)/%,%,$(TEST_FILE))
+	./vendor/bin/phpunit ${PHPUNIT_FLAGS} --configuration ./${TESTS_DIR}/phpunit.xml $</$(patsubst $(TESTS_DIR)/%,%,$(TEST_FILE)) 2>&1 | tee test.log
+ 
 	date
 
 run:

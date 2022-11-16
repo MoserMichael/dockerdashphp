@@ -3,7 +3,6 @@
 use PHPUnit\Framework\TestCase;
 
 require_once dirname(__DIR__) . '/src/base/fmttable.php';
-require_once dirname(__DIR__) . '/src/base/Slurp.php';
 
 final class DockerStreamTest extends TestCase
 {
@@ -20,7 +19,13 @@ final class DockerStreamTest extends TestCase
         return substr($from, $pos, $posEnd - $pos);
     }
 
+    public function setUp():void {
+        $this->markTestSkipped("not needed for now");
+    }
+
     public function testStream(): void {
+
+        echo "learn raw sockets...\n";
         $dockerId = exec("docker run -d  fedora /bin/bash -c 'while true; do sleep 60; done'");
         $this->assertTrue($dockerId !== false);
 

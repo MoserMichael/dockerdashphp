@@ -19,8 +19,6 @@ $image = escapeshellcmd($_GET['ID']);
     <input type="submit" value="Run!"/>
 </form>
 
-
-
 <?php
 
 require_once __DIR__ . "/base/runner.php";
