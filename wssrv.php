@@ -182,8 +182,6 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
 
     // handle first message of a client connection
     private function handleInitMessage($msg, ConnectionInterface $clientConn) : array {
-
-        fwrite(STDERR, "msg: {$msg}\n");
         
         // get docker id from client request
         $jsonMsg = json_decode($msg, true);
@@ -203,7 +201,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
             }
             return $this->attachLogs($containerId, $followLogs, $clientConn);
         } else {
-            fwrite(STDERR, "Unrecognized init message - NOT KEY\n");
+            fwrite(STDERR, "Unrecognized init message\n");
             return array(null, false);
         }
     }

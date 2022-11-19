@@ -241,9 +241,7 @@ class HttpHandler {
                     fwrite(STDERR, "want-eof {$eofLen} has: {$len} data: {$dump} \n");
 
                     if ($len >= $eofLen) {
-
-                        fwrite(STDERR, "has-eof {$eofLen} \n");
-
+                        
                         if ($eofLen == 2) {
                             if (substr($this->buffer, 0, 2) != "\r\n") {
                                 $this->state = self::StateReadingChunkHdr;
@@ -258,15 +256,12 @@ class HttpHandler {
                         }
                         $this->buffer = substr($this->buffer, $eofLen);
                         $dump = bin2hex($this->buffer);
-                        fwrite(STDERR, "chunk-eof ok! state: {$this->state} buffer: {$dump}\n");
 
                     } else {
                         $consumeData = false;
                     }
                 }
         }
-        $l = strlen($this->buffer);
-        fwrite(STDERR, "eof consumeData (buffer-len: {$l})\n");
         return $responseData;
     }
     
@@ -284,10 +279,12 @@ class HttpHandler {
             }
             return false;
         }
+        /*
         if (self::$TRACE) {
             $l = strlen($ret);
             fwrite(STDERR, "read {$l}\n");
         }
+        */
         $this->buffer = $this->buffer . $ret;
         return true;
     }
@@ -308,7 +305,6 @@ class EventDrivenChunkParser extends HttpHandler {
     }
 
     public function handleData() {
-        fwrite(STDERR, "handleData\n");
         
         $rd = $this->readSocket();
         $this->consumeData();
