@@ -202,7 +202,6 @@ class HttpHandler {
                         }
 
                     } else {
-                        fwrite(STDERR, "no chunk len\n");
                         $consumeData = false;
                         break;
                     }
@@ -236,9 +235,6 @@ class HttpHandler {
                 case self::StateReadingChunkEof:
                     $len = strlen($this->buffer);
                     $eofLen = 2;
-
-                    $dump = bin2hex($this->buffer);
-                    fwrite(STDERR, "want-eof {$eofLen} has: {$len} data: {$dump} \n");
 
                     if ($len >= $eofLen) {
                         
