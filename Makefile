@@ -17,10 +17,10 @@ update: composer.json
 install: update
 	composer install
 
-#container-build:
-#		git clean -f -d
-#		docker build -f Dockerfile -t ghcr.io/mosermichael/phpdocker-mm:latest . 2>&1 | tee container-build.log
-#
-#container-push:
-#		./container-push.sh ghcr.io/mosermichael/phpdocker-mm latest
-#
+container-build:
+		git clean -f -d
+		docker build -f Dockerfile -t ghcr.io/mosermichael/phpdocker-mm:latest . 2>&1 | tee container-build.log
+
+container-push:
+		./container-push.sh ghcr.io/mosermichael/phpdocker-mm latest
+
