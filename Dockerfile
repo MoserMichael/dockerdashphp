@@ -8,7 +8,7 @@ RUN php -r "unlink('composer-setup.php');"
 
 # get git
 RUN apt-get update
-RUN apt-get install git -y
+RUN apt-get install git zip -y
 
 # run composer
 
