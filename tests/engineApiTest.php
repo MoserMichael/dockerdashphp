@@ -49,4 +49,11 @@ final class EngineApiTes extends TestCase
         echo "after df\n";
     }
 
+    public function testImageSearch() {
+        $api = new DockerEngineApi();
+        $txt  = $api->imageSearch("fedora");
+        echo "docker search\n$txt\n";
+        $this->assertTrue( $txt != "" );
+    }
+
 }

@@ -21,7 +21,7 @@ $id = $_GET['id'];
         </style>
         </css>
     </head>
-    <body>
+    <body style="margin: 0px; padding: 0px;">
         <script>var docker_container_id="<?php echo $id;?>";</script>
         <div id="term-container"></div>
         <script>

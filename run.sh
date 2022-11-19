@@ -15,7 +15,7 @@ if [[ $DOCKER_API_VERSION == "" ]]; then
     exit 1
 fi
 
-PHP_CLI_SERVER_WORKERS=10 php -S "0.0.0.0:${PORT_PHP}" &
+PHP_CLI_SERVER_WORKERS=10 php -S "0.0.0.0:${PORT_PHP}" -t src &
 PID_PHP=$!
 
 php wssrv.php "${PORT_WSS}" &

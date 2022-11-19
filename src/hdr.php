@@ -1,18 +1,16 @@
-<?php
-
-require_once __DIR__ . "/base/fmttable.php";
+<?php require_once __DIR__ . "/base/fmttable.php";
 
 function show_hdr($idx) {
     $tbl = array(
-        "Containers" => "/src/containers.php",
-        "Images" => "/src/images.php",
-        "Pull/Search" => "/src/reg.php",
-        "Versions/EngineInfo" => "/src/version.php"
+        "Containers" => "/containers.php",
+        "Images" => "/images.php",
+        "Pull/Search" => "/reg.php",
+        "Versions/EngineInfo" => "/version.php"
     );
     $hdr = new base\FmtHeader($tbl);
     echo $hdr->format($idx);
 }
 
 function use_docker_api() {
-    return false;
+    return true ;
 }

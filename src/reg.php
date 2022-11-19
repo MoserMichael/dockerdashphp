@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . "/base/nocache.php"; ?>
 <html>
 <?php include( __DIR__ . "/static-files/css.css"); ?>
 <script>
@@ -10,7 +11,7 @@ require_once __DIR__ . "/hdr.php";
 show_hdr(2);
 ?>
 <h3>Pulling docker image</h3>
-<form action="/src/gen.php">
+<form action="/gen.php">
     <input type="hidden" name="cmd" value="pull"/>
     Image: <input name="id" type="input"/>
     <p/>
@@ -20,7 +21,7 @@ show_hdr(2);
 <hr>
 
 <h3>Search for docker image</h3>
-<form action="/src/gen.php">
+<form action="/searchres.php">
     <input type="hidden" name="cmd" value="search"/>
     Image: <input name="id" type="input"/>
     <p/>

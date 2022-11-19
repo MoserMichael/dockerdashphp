@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . "/base/nocache.php"; ?>
 <html>
 <?php include( __DIR__ . "/static-files/css.css"); ?>
 <script>
@@ -12,7 +13,7 @@ show_hdr(-1);
 $image = escapeshellcmd($_GET['ID']);
 ?>
 <h3>Docker run command line</h3>
-<form action="/src/gen.php">
+<form action="/gen.php">
     <input type="hidden" name="cmd" value="run"/>
     docker run <input name="id" type="input" value="<?php echo $image;?>"/>
     <p/>

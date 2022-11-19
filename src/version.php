@@ -1,3 +1,4 @@
+<?php require_once __DIR__ . "/base/nocache.php"; ?>
 <html>
 <?php include( __DIR__ . "/static-files/css.css"); ?>
 <script>
@@ -20,12 +21,12 @@ require_once __DIR__ . "/../vendor/autoload.php";
 require_once __DIR__  . "/DockerRest/DockerRest.php";
 
 $json=null;
-if (use_docker_api()) {
+if (!use_docker_api()) {
     $runner = new base\Runner("docker version", False);
     $json = $runner->run();
 } else {
     $runner = new DockerRest\DockerEngineApi();
-    $jsonRaw = $runner->version();
+    list ($ok, $jsonRaw) = $runner->dockerVersion();
     $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
 }
 
@@ -37,7 +38,7 @@ echo $tbl->format_row($json);
 
 
 <?php
-if (use_docker_api()) {
+if (!use_docker_api()) {
 
     echo "<h3>Disk Usage</h3>";
     echo "Command: <code>docker system df</code>";
@@ -58,12 +59,12 @@ Command: <code>docker info</code>
 
 <?php
 
-if (use_docker_api()) {
+if (!use_docker_api()) {
     $runner = new base\Runner("docker info --format='{{json .}}'");
     $json = $runner->run();
 } else {
     $runner = new DockerRest\DockerEngineApi();
-    $jsonRaw = $runner->info();
+    list($ok, $jsonRaw) = $runner->dockerInfo();
     $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
 }
 

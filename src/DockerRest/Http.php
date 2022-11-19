@@ -2,22 +2,47 @@
 
 use GuzzleHttp\Psr7\Message;
 
+if(!defined('STDIN'))  define('STDIN',  fopen('php://stdin',  'rb'));
+if(!defined('STDOUT')) define('STDOUT', fopen('php://stdout', 'wb'));
+if(!defined('STDERR')) define('STDERR', fopen('php://stderr', 'wb'));
+
+interface ChunkConsumerInterface {
+    public function onChunk($data);
+    public function onClose();
+}
+
 class HttpHandler {
     const EOF_HDR = "\r\n\r\n";
     const EOF_LINE = "\r\n";
-    const TRACE = false;  // set to on for tracing of requests/responses
-    const TRACE_CHUNK = false;  // set to on for tracing of requests/responses
+    private static $TRACE = true;  // set to on for tracing of requests/responses
+    private static $TRACE_CHUNK = true;  // set to on for tracing of requests/responses
 
     protected $sock;
     protected string $buffer;
+    protected $chunkConsumer;
 
-    public function __construct($sock) {
+    private $state;
+    private $chunkLen;
+
+    const StateReadingChunkHdr = 1;
+    const StateReadingChunkData = 2;
+    const StateReadingChunkEof = 3;
+    const StateFinishedAllChunks = 4;
+
+    public function __construct($sock, $chunkConsumer = null) {
         $ret = stream_set_blocking($sock, false);
         if ($ret === false) {
             fwrite(STDERR, "Can't set stream to non blocking mode\n");
         }
         $this->sock = $sock;
         $this->buffer = "";
+        $this->chunkConsumer = $chunkConsumer;
+        $this->state = self::StateReadingChunkHdr;
+    }
+
+    public static function setTrace($trace, $dataTrace) {
+        self::$TRACE = $trace;
+        self::$TRACE_CHUNK = $dataTrace;
     }
 
     public function getSocket() {
@@ -55,15 +80,16 @@ class HttpHandler {
             $hdr = $this->readHttpResponseHeader();
             if ($hdr != null) {
                 $stat = $hdr->getStatusCode();
+                $body = $this->parseTransferEncodingBody($hdr);
+
                 if ($stat == $expectedStatus) {
-                    $body = $this->parseTransferEncodingBody($hdr);
-                    return array($hdr, $body);
+                    return array(true, $body, $hdr);
                 }
-                $stat = $hdr->getStatusCode();
                 fwrite(STDERR, "Status {$stat} not expected for {$url}\n");
+                return array(false, $body, $hdr);
             }
         }
-        return array(false, null);
+        return array(false, null, null);
     }
 
     protected function sendHeaderCommon(string $url, array $request = null, int $method = self::MethodPost, $customHdr="") : bool {
@@ -81,7 +107,7 @@ class HttpHandler {
             = "{$methodName} {$url} HTTP/1.1\r\n" .
             "Host: localhost\r\n{$contentLen}Accept: */*\r\nContent-Type: application/json{$customHdr}\r\n\r\n{$json}";
 
-        if (self::TRACE) {
+        if (self::$TRACE) {
             fwrite(STDERR, "Request\n=======\n{$requestText}\n");
         }
 
@@ -112,11 +138,13 @@ class HttpHandler {
             if (!($pos === false)) {
                 $msg = substr($this->buffer, 0, $pos + strlen(self::EOF_HDR));
 
-                if (self::TRACE) {
-                    fwrite(STDERR, "Response\n========\n{$msg}\n");
+                $ret = Message::parseResponse($msg); // strange parser
+
+                if (self::$TRACE) {
+                    $has_response = $ret !== null;
+                    fwrite(STDERR, "Response-hdr ${has_response}\n============\n{$msg}\n");
                 }
 
-                $ret = Message::parseResponse($msg); // strange parser
                 $this->buffer = substr($this->buffer, $pos + strlen(self::EOF_HDR));
                 return $ret;
             }
@@ -124,7 +152,6 @@ class HttpHandler {
     }
 
     protected function parseTransferEncodingBody($hdr) {
-        $responseData = "";
 
         $httpHeaderValue = null;
         if ($hdr->hasHeader("Transfer-Encoding")) {
@@ -134,68 +161,116 @@ class HttpHandler {
         if ($httpHeaderValue != null &&
             array_key_exists(0, $httpHeaderValue) &&
             $httpHeaderValue[0] == "chunked") {
-            
-            $hasChunkLen = false;
-            $len = 0;
+            return $this->parseChunks();
+        }
 
-            while (True) {
+        return "";
+    }
 
-                if (!$hasChunkLen) {
-                    $pos = strpos($this->buffer, self::EOF_LINE);
-                    if (!($pos === false)) {
-                        $msg = substr($this->buffer, 0, $pos);
-                        $len = hexdec($msg);
-                        $this->buffer = substr($this->buffer, $pos + strlen(self::EOF_LINE));
-
-                        if (self::TRACE_CHUNK) {
-                            fwrite(STDERR, "chunk-len: {$len}\n");
-                        }
-
-                        if ($len == 0) {
-                            break;
-                        }
-                        $hasChunkLen = true;
-                    } else {
-                        if (!$this->readSocket()) {
-                            fwrite(STDERR, "socket read error\n");
-                            return false;
-                        }
-                    }
-                } else if ($hasChunkLen) {
-
-                    // did we read the chunk - consume the chunk
-                    if (strlen($this->buffer) >= $len) {
-                        $chunkData = substr($this->buffer, 0, $len);
-                        $this->buffer = substr($this->buffer, $len);
-                        if (strlen($this->buffer) >= strlen(self::EOF_LINE)) {
-                            $str = substr($this->buffer, 0, strlen(self::EOF_LINE));
-                            if ($str == self::EOF_LINE) {
-                                $this->buffer = substr($this->buffer, strlen(self::EOF_LINE));
-                            }
-                        }
-                        $responseData = $responseData . $chunkData;
-                        $hasChunkLen = false;
-                    } else {
-                        if (!$this->readSocket()) {
-                            fwrite(STDERR, "socket read error\n");
-                            return false;
-                        }
-                    }
-                }
-
-
+    private function parseChunks() {
+        $this->state =  self::StateReadingChunkHdr;
+        $responseData = "";
+        $rd = true;
+        while($this->state != self::StateFinishedAllChunks) {
+            $resp = $this->consumeData();
+            $responseData .=  $resp;
+            if ($rd === false || $this->state == self::StateFinishedAllChunks) {
+                break;
             }
+            $rd = $this->readSocket();
         }
-
-        if (self::TRACE_CHUNK) {
-            $l = strlen($responseData);
-            fwrite(STDERR, "Body-len {$l}\n");
-        }
-
         return $responseData;
     }
 
-    private function readSocket() {
+    public function consumeData() {
+        $responseData = "";
+        $consumeData = true;
+
+
+        while ($consumeData) {
+            switch ($this->state) {
+                case self::StateReadingChunkHdr:
+                    $pos = strpos($this->buffer, self::EOF_LINE);
+                    if ($pos !== false) {
+                        $msg = substr($this->buffer, 0, $pos);
+                        $this->chunkLen = hexdec($msg);
+                        $this->buffer = substr($this->buffer, $pos + strlen(self::EOF_LINE));
+                        $this->state = self::StateReadingChunkData;
+
+                        if (self::$TRACE_CHUNK) {
+                            fwrite(STDERR, "chunk-len: {$this->chunkLen}\n");
+                        }
+
+                    } else {
+                        fwrite(STDERR, "no chunk len\n");
+                        $consumeData = false;
+                        break;
+                    }
+                //fallthrough
+
+                case self::StateReadingChunkData:
+                    $len = strlen($this->buffer);
+                    if ($len >= $this->chunkLen) {
+                        if ($this->chunkLen > 0) {
+                            $msg = substr($this->buffer, 0, $this->chunkLen);
+
+                            if (self::$TRACE_CHUNK) {
+                                fwrite(STDERR, "chunk-data: {$msg}\n");
+                            }
+
+                            if ($this->chunkConsumer != null) {
+                                $this->chunkConsumer->onChunk($msg);
+                            } else {
+                                $responseData = $responseData . $msg;
+                            }
+
+                            $this->buffer = substr($this->buffer, $this->chunkLen);
+                        }
+                        $this->state = self::StateReadingChunkEof;
+                    } else {
+                        $consumeData = false;
+                        break;
+                    }
+                //fallthrough
+
+                case self::StateReadingChunkEof:
+                    $len = strlen($this->buffer);
+                    $eofLen = 2;
+
+                    $dump = bin2hex($this->buffer);
+                    fwrite(STDERR, "want-eof {$eofLen} has: {$len} data: {$dump} \n");
+
+                    if ($len >= $eofLen) {
+
+                        fwrite(STDERR, "has-eof {$eofLen} \n");
+
+                        if ($eofLen == 2) {
+                            if (substr($this->buffer, 0, 2) != "\r\n") {
+                                $this->state = self::StateReadingChunkHdr;
+                            }
+
+                            if ($this->chunkLen == 0) {
+                                $this->state = self::StateFinishedAllChunks;
+                                $consumeData = false;
+                            } else {
+                                $this->state = self::StateReadingChunkHdr;
+                            }
+                        }
+                        $this->buffer = substr($this->buffer, $eofLen);
+                        $dump = bin2hex($this->buffer);
+                        fwrite(STDERR, "chunk-eof ok! state: {$this->state} buffer: {$dump}\n");
+
+                    } else {
+                        $consumeData = false;
+                    }
+                }
+        }
+        $l = strlen($this->buffer);
+        fwrite(STDERR, "eof consumeData (buffer-len: {$l})\n");
+        return $responseData;
+    }
+    
+    protected function readSocket() {
         $r = array($this->sock);
         $w = array();
         $e = array();
@@ -204,10 +279,44 @@ class HttpHandler {
 
         $ret = fread($this->sock, 4096);
         if ($ret === false) {
+            if (self::$TRACE) {
+                fwrite(STDERR, "error reading\n");
+            }
             return false;
         }
-        $l = strlen($ret);
+        if (self::$TRACE) {
+            $l = strlen($ret);
+            fwrite(STDERR, "read {$l}\n");
+        }
         $this->buffer = $this->buffer . $ret;
         return true;
     }
+}
+
+class EventDrivenChunkParser extends HttpHandler {
+
+    public function __construct($sock, $chunkConsumer) {
+        parent::__construct($sock, $chunkConsumer);
+    }
+
+    public function getDockerSocker() {
+        return $this->sock;
+    }
+
+    public function doClose() {
+        fclose($this->sock);
+    }
+
+    public function handleData() {
+        fwrite(STDERR, "handleData\n");
+        
+        $rd = $this->readSocket();
+        $this->consumeData();
+
+        if ($rd === false) {
+            fwrite(STDERR, "chunkReader: onClose\n");
+            $this->chunkConsumer->onClose();
+        }
+    }
+
 }
