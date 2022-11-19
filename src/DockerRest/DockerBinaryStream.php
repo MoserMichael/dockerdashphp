@@ -10,7 +10,7 @@ class DockerBinaryStreamBase  {
     private string $dataBuffer;
     private int $msgType;
     private int $msgLen;
-    protected static $TRACE = true;  // set to on for tracing of requests/responses
+    protected static $TRACE = false;  // set to on for tracing of requests/responses
 
     const StateParseDockerMessageHeader = 1;
     const StateParseDockerMessageBody = 2;
