@@ -26,15 +26,20 @@ class DockerLogsBinaryStreamCtx implements DockerBinaryStreamHandler {
     private MessageComponentInterface $component;
     private ConnectionInterface $clientConnection;
     private EventDrivenChunkParser $dockerBinaryStream;
+    private ChunkConsumerInterface $chunkConsumer;
 
 
     public function __construct(MessageComponentInterface $component, ConnectionInterface $clientConnection, $dockerSocket) {
         $this->component = $component;
         $this->clientConnection = $clientConnection;
-        $chunkConsumer = new DockerBinaryStreamChunkConsumer($this);
-        $this->dockerBinaryStream = new EventDrivenChunkParser($dockerSocket, $chunkConsumer);
+        $this->chunkConsumer = new DockerBinaryStreamChunkConsumer($this);
+        $this->dockerBinaryStream = new EventDrivenChunkParser($dockerSocket, $this->chunkConsumer);
 
         $this->dockerBinaryStream->consumeData();
+    }
+
+    public function getChunkConsumerInterface() : ChunkConsumerInterface {
+        return $this->chunkConsumer;
     }
 
     public function getSocket() {
@@ -207,30 +212,28 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
     }
 
     private function attachLogs($containerId, $followLogs, ConnectionInterface $clientConnection) {
-        
-        $logHandshake = new DockerEngineApi();
 
-
-        if ($logHandshake->containerLogs($containerId, $followLogs)) {
-            $dockerSocket = $logHandshake->getSocket();
-
-            $socketState = new DockerLogsBinaryStreamCtx( $this, $clientConnection, $dockerSocket);
-            
-            if ($dockerSocket !== false) {
-                try {
-                    $this->loop->addReadStream($dockerSocket, function ($sock) use ($socketState) {
-                        $socketState->handleData();
-                    });
-                    return array($socketState, false);
-                } catch (Exception $ex) {
-                    fwrite(STDERR, "can't add handlers {$ex}. very bad.\n");
-                }
-            } else {
-                fwrite(STDERR, "handshake failed\n");
-            }
-        } else {
+        $dockerSocket = DockerEngineApi::openDockerSocket();
+        if ($dockerSocket === false) {
             fwrite(STDERR, "not socket, docker not running\n");
             $clientConnection->close();
+        }
+
+        $socketState = new DockerLogsBinaryStreamCtx($this, $clientConnection, $dockerSocket);
+        $logHandshake = new DockerEngineApi($dockerSocket, $socketState->getChunkConsumerInterface());
+
+        list ($ok) = $logHandshake->containerLogs($containerId, $followLogs);
+        if ($ok) {
+            try {
+                $this->loop->addReadStream($dockerSocket, function ($sock) use ($socketState) {
+                    $socketState->handleData();
+                });
+                return array($socketState, false);
+            } catch (Exception $ex) {
+                fwrite(STDERR, "can't add handlers {$ex}. very bad.\n");
+            }
+        } else {
+            fwrite(STDERR, "handshake failed\n");
         }
         return array(null, false);
     }

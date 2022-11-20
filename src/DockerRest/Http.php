@@ -185,8 +185,7 @@ class HttpHandler {
     public function consumeData() {
         $responseData = "";
         $consumeData = true;
-
-
+        
         while ($consumeData) {
             switch ($this->state) {
                 case self::StateReadingChunkHdr:

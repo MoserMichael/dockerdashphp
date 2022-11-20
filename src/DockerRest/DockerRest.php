@@ -9,13 +9,21 @@ class DockerEngineApi extends HttpHandler {
     public static function setApiVersion(string $version) : void {
         self::$dockerApiVersion = $version;
     }
+    
+    public static function openDockerSocket() {
+        $sock = fsockopen("unix:///var/run/docker.sock");
+        if ($sock === false) {
+            fwrite(STDERR, "Can't connect docker socket\n");
+        }
+        return $sock;
+    }
 
     public function __construct($sock = null, ChunkConsumerInterface $chunkConsumer = null) {
         if ($sock == null) {
-            $sock = fsockopen("unix:///var/run/docker.sock");
-            if ($sock === false) {
-                fwrite(STDERR, "Can't connect docker socket\n");
-            }
+            $sock = self::openDockerSocket();
+        }
+        if ($sock === false) {
+            fwrite(STDERR, "Can't connect docker socket\n");
         }
 
         $api = getenv("DOCKER_API_VERSION");
@@ -30,17 +38,7 @@ class DockerEngineApi extends HttpHandler {
         $ver = self::$dockerApiVersion;
         $url = "/{$ver}/containers/{$id}/logs?follow={$followLogs}&stdout=true&stderr=true&timestamps=true";
 
-        //$customHdr = "\r\nUpgrade: tcp\r\nConnection: Upgrade";
-        if ($this->sendHeaderCommon($url, null, self::MethodGet)) {
-            $hdr = $this->readHttpResponseHeader();
-            if ($hdr != null) {
-                $stat = $hdr->getStatusCode();
-                if ($stat == 200) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return $this->sendCommonRequest($url, null, 200, self::MethodGet);
     }
 
     public function containerPause($id)

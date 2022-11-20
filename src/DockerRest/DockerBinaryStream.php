@@ -10,6 +10,7 @@ class DockerBinaryStreamBase  {
     private string $dataBuffer;
     private int $msgType;
     private int $msgLen;
+    private bool $passThrough;
     protected static $TRACE = false;  // set to on for tracing of requests/responses
 
     const StateParseDockerMessageHeader = 1;
@@ -20,6 +21,7 @@ class DockerBinaryStreamBase  {
         $this->streamHandler = $streamHandler;
         $this->state = self::StateParseDockerMessageHeader;
         $this->dataBuffer = "";
+        $this->passThrough = false;
     }
 
     protected function processData($data) : void {
@@ -34,26 +36,35 @@ class DockerBinaryStreamBase  {
         }
         */
 
-        while(true) {
-            if ($this->state == self::StateParseDockerMessageHeader) {
-                $len = strlen($this->dataBuffer);
-                if ($len >= self::HeaderMsgSize) {
-                    $this->parseHeader();
-                    $this->state = self::StateParseDockerMessageBody;
-                } else {
-                    break;
+        if (!$this->passThrough) {
+            while (true) {
+                if ($this->state == self::StateParseDockerMessageHeader) {
+                    $len = strlen($this->dataBuffer);
+                    if ($len >= self::HeaderMsgSize) {
+                        if (!$this->parseHeader()) {
+                            $this->passThrough = true;
+                            break;
+                        }
+                        $this->state = self::StateParseDockerMessageBody;
+                    } else {
+                        break;
+                    }
                 }
-            }
 
-            if ($this->state == self::StateParseDockerMessageBody) {
-                $len = strlen($this->dataBuffer);
-                if ($len >= $this->msgLen) {
-                    $this->consumeMessage();
-                    $this->state = static::StateParseDockerMessageHeader;
-                } else {
-                    break;
+                if ($this->state == self::StateParseDockerMessageBody) {
+                    $len = strlen($this->dataBuffer);
+                    if ($len >= $this->msgLen) {
+                        $this->consumeMessage();
+                        $this->state = static::StateParseDockerMessageHeader;
+                    } else {
+                        break;
+                    }
                 }
             }
+        }
+        if ($this->passThrough) {
+            $this->streamHandler->onMessage($this->dataBuffer);
+            $this->dataBuffer = "";
         }
     }
 
@@ -61,6 +72,11 @@ class DockerBinaryStreamBase  {
         $hdr = substr($this->dataBuffer, 0, self::HeaderMsgSize);
         $msg = unpack("C*", $hdr);
         $this->msgType = $msg[1];
+
+        if ($this->msgType != 1 && $this->msgType != 2) {
+            return false;
+        }
+
         $this->msgLen = $msg[8] + ($msg[7] << 8) + ($msg[6] << 16) + ($msg[5] << 24);
         $this->dataBuffer = substr($this->dataBuffer, self::HeaderMsgSize);
 
@@ -69,6 +85,7 @@ class DockerBinaryStreamBase  {
             $h = $this->hexDump($hdr);
             fwrite(STDERR, "header-data\n" . $h . "\n");
         }
+        return true;
     }
     
     private function consumeMessage() : void {

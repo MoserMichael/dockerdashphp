@@ -89,14 +89,17 @@ if (!use_docker_api()) {
     let wsProtocol = location.protocol === 'http:' ? 'ws' : 'wss';
     let port = parseInt(location.port) + 1;
     let url = wsProtocol + '://' + location.hostname + ':' + port + '/wsconn.php';
+    console.log("connect to url: " + url);
     let socket = new WebSocket( url );
     socket.onopen = function(event) {
         let json = JSON.stringify({'log_container_id' : '<?php echo "$id" ?>', 'follow' : '<?php echo "{$follow_logs}"; ?>' });
+        console.log("sending: " + json);
         socket.send( json );
     }
     socket.onmessage = function(event) {
         let data = JSON.parse(event.data);
         if (data.data !== undefined) {
+            console.log("got: " + data.data);
             let log_div = document.getElementById('text_content');
             log_div.insertAdjacentHTML('beforeend', data.data);
         }
