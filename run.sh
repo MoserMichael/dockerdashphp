@@ -2,6 +2,8 @@
 
 set -x
 
+NUM_WORKERS=10
+
 PORT_PHP="${PORT_PHP:=8001}"
 PORT_WSS="${PORT_WSS:=8002}"
 
@@ -16,7 +18,11 @@ if [[ $DOCKER_API_VERSION == "" ]]; then
 fi
 echo "version: ${DOCKER_API_VERSION}"
 
-PHP_CLI_SERVER_WORKERS=10 php -S "0.0.0.0:${PORT_PHP}" -t src &
+if [[ "${NUM_WORKERS}" != "1" ]]; then
+    export PHP_CLI_SERVER_WORKERS="${NUM_WORKERS}" 
+fi
+
+php -S "0.0.0.0:${PORT_PHP}" -t src &
 PID_PHP=$!
 
 php wssrv.php "${PORT_WSS}" &

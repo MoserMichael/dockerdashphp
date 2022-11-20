@@ -106,7 +106,7 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
     public function onMessage($msg) {
         $arr = array("data" => $msg);
         $json_data = json_encode($arr);
-        $this->clientConnection->send($json_data); // how do I check that it succeeded?
+        $this->clientConnection->   send($json_data); // how do I check that it succeeded?
     }
 
     public function onClose() {
@@ -148,6 +148,8 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
         fwrite(STDERR,"onClose\n");
         $objId = spl_object_id($clientConn);
         if (array_key_exists($objId, $this->mapConnToHandler)) {
+            fwrite(STDERR,"closing connection handler\n");
+
             $handler = $this->mapConnToHandler[$objId];
             unset($this->mapConnToHandler[$objId]);
 
@@ -204,14 +206,26 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
             if (array_key_exists('follow', $jsonMsg)) {
                 $followLogs = $jsonMsg['follow'];
             }
-            return $this->attachLogs($containerId, $followLogs, $clientConn);
+            return $this->openLogs($containerId, $followLogs, $clientConn, $jsonMsg);
         } else {
             fwrite(STDERR, "Unrecognized init message\n");
             return array(null, false);
         }
     }
 
-    private function attachLogs($containerId, $followLogs, ConnectionInterface $clientConnection) {
+    private function openLogs($containerId, $followLogs, ConnectionInterface $clientConnection, array $jsonMsg) {
+        $from = -1;
+        $to = -1;
+
+        if (array_key_exists('since', $jsonMsg)) {
+            $from = $jsonMsg['since'];
+        }
+
+        if (array_key_exists('until', $jsonMsg)) {
+            $to = $jsonMsg['until'];
+        }
+
+        fwrite(STDERR, "openLogs container: {$containerId} follow: {$followLogs} from: {$from} to: {$to}\n");
 
         $dockerSocket = DockerEngineApi::openDockerSocket();
         if ($dockerSocket === false) {
@@ -222,7 +236,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
         $socketState = new DockerLogsBinaryStreamCtx($this, $clientConnection, $dockerSocket);
         $logHandshake = new DockerEngineApi($dockerSocket, $socketState->getChunkConsumerInterface());
 
-        list ($ok) = $logHandshake->containerLogs($containerId, $followLogs);
+        list ($ok) = $logHandshake->containerLogs($containerId, $followLogs, $from, $to);
         if ($ok) {
             try {
                 $this->loop->addReadStream($dockerSocket, function ($sock) use ($socketState) {
@@ -290,18 +304,24 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
 
 
 $listenPort = 8002;
+
+function runServer($listenPort) : void {
+
+    $docker = new WebsocketToTerminalComponent();
+    $loop = Loop::get();
+    $server = IoServer::factory(
+        new HttpServer(
+            new WsServer(
+                $docker)
+        ),
+        $listenPort
+    );
+    $docker->setLoop($server->loop);
+    $server->run();
+}
+
 if (array_key_exists(1, $argv)) {
     $listenPort = intval($argv[1]);
 }
 
-$docker = new WebsocketToTerminalComponent();
-$loop = Loop::get();
-$server = IoServer::factory(
-    new HttpServer(
-        new WsServer(
-            $docker)
-        ),
-    $listenPort
-);
-$docker->setLoop($server->loop);
-$server->run();
+runServer($listenPort);

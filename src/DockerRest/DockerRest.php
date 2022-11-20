@@ -34,9 +34,20 @@ class DockerEngineApi extends HttpHandler {
         parent::__construct($sock, $chunkConsumer);
     }
 
-    public function containerLogs($id, $followLogs) {
+    public function containerLogs(string $id, $followLogs, $from = -1, $to = -1) {
         $ver = self::$dockerApiVersion;
-        $url = "/{$ver}/containers/{$id}/logs?follow={$followLogs}&stdout=true&stderr=true&timestamps=true";
+        
+        $times = "";
+        
+        if ($from != -1) {
+            $times = "{$times}&since={$from}";
+        }
+
+        if ($to != -1) {
+            $times = "{$times}&until={$to}";
+        }
+        
+        $url = "/{$ver}/containers/{$id}/logs?follow={$followLogs}&stdout=true&stderr=true&timestamps=true{$times}";
 
         return $this->sendCommonRequest($url, null, 200, self::MethodGet);
     }
@@ -48,21 +59,21 @@ class DockerEngineApi extends HttpHandler {
         return $this->sendCommonRequest($url, null, 204, self::MethodPost);
     }
 
-    public function containerStop($id)
+    public function containerStop(string $id)
     {
         $ver = self::$dockerApiVersion;
         $url = "/{$ver}/containers/{$id}/stop";
         return $this->sendCommonRequest($url, null, 204, self::MethodPost);
     }
 
-    public function containerResume($id)
+    public function containerResume(string $id)
     {
         $ver = self::$dockerApiVersion;
         $url = "/{$ver}/containers/{$id}/unpause";
         return $this->sendCommonRequest($url, null, 204, self::MethodPost);
     }
 
-    public function containerStats($id, $stream=false)
+    public function containerStats(string $id, $stream=false)
     {
         $ver = self::$dockerApiVersion;
         $url = "/{$ver}/containers/{$id}/stats?stream={$stream}";
@@ -70,7 +81,7 @@ class DockerEngineApi extends HttpHandler {
 
     }
 
-    public function containerProcessList($id)
+    public function containerProcessList(string $id)
     {
         $ver = self::$dockerApiVersion;
         $url = "/{$ver}/containers/{$id}/top";
@@ -83,7 +94,18 @@ class DockerEngineApi extends HttpHandler {
         return $this->sendCommonRequest($url, null, 200, self::MethodPost);
     }
 
-    public function imageRemove($id) {
+    public function imagePull(string $name, string $tag =null) {
+        $ver = self::$dockerApiVersion;
+        $urlArg="";
+        if ($tag != null) {
+            $urlArg= "&tag={$tag}";
+        }
+        $url = "/{$ver}/images/create?fromImage={$name}{$urlArg}";
+        return $this->sendCommonRequest($url, null, 200, self::MethodDelete);
+    }
+
+
+    public function imageRemove(string $id) {
         $ver = self::$dockerApiVersion;
         $url = "/{$ver}/images/{$id}";
         return $this->sendCommonRequest($url, null, 200, self::MethodDelete);

@@ -236,7 +236,7 @@ class HttpHandler {
                     $eofLen = 2;
 
                     if ($len >= $eofLen) {
-                        
+
                         if ($eofLen == 2) {
                             if (substr($this->buffer, 0, 2) != "\r\n") {
                                 $this->state = self::StateReadingChunkHdr;
@@ -255,7 +255,17 @@ class HttpHandler {
                     } else {
                         $consumeData = false;
                     }
-                }
+                    if ($this->state != self::StateFinishedAllChunks) {
+                        break;
+                    }
+                //fallthrough
+
+                case self::StateFinishedAllChunks:
+                    if ($this->chunkConsumer != null) {
+                        $this->chunkConsumer->onClose();
+                    }
+                    break;
+            }
         }
         return $responseData;
     }

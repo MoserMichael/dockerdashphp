@@ -12,23 +12,27 @@ final class EngineApiTes extends TestCase
     public function testImages() : void
     {
         $api = new DockerEngineApi();
-        $images = $api->imageList();
+        list($res, $images) = $api->imageList();
         echo "images:\n$images\n";
+        
+        $this->assertTrue($res);
         $this->assertTrue($images != "");
     }
 
     public function testContainers() : void
     {
         $api = new DockerEngineApi();
-        $containers  = $api->containersList();
+        list($res, $containers)  = $api->containersList();
         echo "containers:\n$containers\n";
+        
+        $this->assertTrue( $res );
         $this->assertTrue( $containers != "" );
     }
 
     public function testInfo() : void
     {
         $api = new DockerEngineApi();
-        $txt  = $api->info();
+        list($res,$txt)  = $api->dockerInfo();
         echo "info:\n$txt\n";
         $this->assertTrue( $txt != "" );
     }
@@ -36,24 +40,27 @@ final class EngineApiTes extends TestCase
     public function testVersion() : void
     {
         $api = new DockerEngineApi();
-        $txt  = $api->version();
+        list($res, $txt)  = $api->dockerVersion();
         echo "version:\n$txt\n";
+        $this->assertTrue( $res );
         $this->assertTrue( $txt != "" );
-    }
-
-    public function testDF() : void
-    {
-        $api = new DockerEngineApi();
-        $txt  = $api->df();
-        $this->assertTrue( $txt != "" );
-        echo "after df\n";
     }
 
     public function testImageSearch() {
         $api = new DockerEngineApi();
-        $txt  = $api->imageSearch("fedora");
+        list ($txt)  = $api->imageSearch("fedora");
         echo "docker search\n$txt\n";
         $this->assertTrue( $txt != "" );
+    }
+
+    public function testImagePull()
+    {
+        $api = new DockerEngineApi();
+        list($res) = $api->imagePull("ubuntu", "latest");
+        $this->assertTrue($res);
+
+        list ($res) = $api->imageRemove("ubuntu:latest");
+        $this->assertTrue($res);
     }
 
 }
