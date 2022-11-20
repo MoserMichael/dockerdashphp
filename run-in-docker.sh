@@ -71,14 +71,6 @@ if [[ $ACTION == 'start' ]]; then
  
     export DOCKER_API_VERSION="v${D//\"/}"
 
-#    if [[ $D == "" ]]; then
-#        echo "Error: Can't get api version, is docker daemon installed and running?"
-#        exit 1
-#    fi
-#    L=${#D}
-#    L=$(($L - 2))
-#    D=${D:1:${L}}
-#
     docker run --rm --name docker-web -v /var/run/docker.sock:/var/run/docker.sock -p $PORT:$PORT -p $NEXT_PORT:$NEXT_PORT -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -dt ${IMAGE_LOCATION} 
     echo "Listen on http://${HOST}:${PORT}/images.php"
 else 
