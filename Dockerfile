@@ -10,14 +10,14 @@ RUN php -r "unlink('composer-setup.php');"
 RUN apt-get update
 RUN apt-get install git zip -y
 
-# run composer
-
-ENV COMPOSER_ALLOW_SUPERUSER=1
-
-COPY . /usr/src/myapp
+# add sources
+ADD . /usr/src/myapp
 WORKDIR /usr/src/myapp
 
+# run composer
+ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN php /composer.phar update
 RUN php /composer.phar install
+
 
 CMD [ "/bin/bash", "-c", "./run.sh" ]
