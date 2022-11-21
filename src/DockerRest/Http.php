@@ -92,17 +92,26 @@ class HttpHandler {
         return array(false, null, null);
     }
 
-    protected function sendHeaderCommon(string $url, array $request = null, int $method = self::MethodPost, $customHdr="") : bool {
+    protected function sendHeaderCommon(string $url, $request = null, int $method = self::MethodPost, string $customHdr="") : bool {
         $json = "";
         $contentLen = "";
 
         if ($request != null) {
-            $json = json_encode($request);
+            if (is_array($request)) {
+                $json = json_encode($request);
+            } else if (is_string($request)) {
+                $json = $request;
+            } else {
+                fwrite(STDERR, "Can't send request, request param must be array or string\n");
+                return false;
+            }
             $jsonLen = strlen($json);
             $contentLen = "Content-Length: {$jsonLen}\r\n";
         }
 
         $methodName = self::MethodNames[$method];
+
+
         $requestText
             = "{$methodName} {$url} HTTP/1.1\r\n" .
             "Host: localhost\r\n{$contentLen}Accept: */*\r\nContent-Type: application/json{$customHdr}\r\n\r\n{$json}";

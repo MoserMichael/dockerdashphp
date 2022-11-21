@@ -2,6 +2,34 @@
 
 require_once __DIR__ . "/Http.php";
 
+
+class DockerEngineAuthentication {
+
+    private $encoded = null;
+
+    public function __construct(string $username, string $password, string $authtoken) {
+        $auth_arr = null;
+        if ($authtoken != null) {
+            $auth_arr = array('username' => $username, 'password' => $password);
+        } else if ($username != null && $password != null) {
+            $auth_arr = array('identitytoken' => $authtoken);
+        }
+
+        if ($auth_arr != null) {
+            $auth_str = json_encode($auth_arr);
+            if ($auth_str != null) {
+                $this->encoded = base64_encode($auth_str);
+            }
+        }
+    }
+
+    public function getEncoded() : string {
+        $ret = $this->encoded;
+        $this->encoded = "";
+        return $ret;
+    }
+}
+
 class DockerEngineApi extends HttpHandler {
 
     private static $dockerApiVersion = "v1.41";
@@ -94,14 +122,21 @@ class DockerEngineApi extends HttpHandler {
         return $this->sendCommonRequest($url, null, 200, self::MethodPost);
     }
 
-    public function imagePull(string $name, string $tag =null) {
+    public function imagePull(string $imageName, DockerEngineAuthentication $auth = null, string $tag = null) {
         $ver = self::$dockerApiVersion;
+        $hdr = "";
+        $data = null;
+
         $urlArg="";
         if ($tag != null) {
             $urlArg= "&tag={$tag}";
         }
-        $url = "/{$ver}/images/create?fromImage={$name}{$urlArg}";
-        return $this->sendCommonRequest($url, null, 200, self::MethodDelete);
+        if ($auth != null) {
+            $data = $auth->getEncoded();
+        }
+
+        $url = "/{$ver}/images/create?fromImage={$imageName}{$urlArg}";
+        return $this->sendCommonRequest($url, null, 200, self::MethodGet, $hdr, $data);
     }
 
 

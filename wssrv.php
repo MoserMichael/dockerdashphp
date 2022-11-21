@@ -8,6 +8,7 @@ use \DockerRest\DockerEngineApi;
 use \DockerRest\DockerBinaryStreamHandler;
 use \DockerRest\DockerBinaryStream;
 use \DockerRest\ChunkConsumerInterface;
+use \DockerRest\DockerEngineAuthentication;
 use \DockerRest\EventDrivenChunkParser;
 use \DockerRest\DockerBinaryStreamChunkConsumer;
 
@@ -21,7 +22,7 @@ use Ratchet\WebSocket\WsServer;
 use Ratchet\ConnectionInterface;
 
 
-class DockerLogsBinaryStreamCtx implements DockerBinaryStreamHandler {
+class DockerCommonBinaryStreamCtx implements DockerBinaryStreamHandler {
 
     private MessageComponentInterface $component;
     private ConnectionInterface $clientConnection;
@@ -71,7 +72,6 @@ class DockerLogsBinaryStreamCtx implements DockerBinaryStreamHandler {
     public function doClose() {
         $this->dockerBinaryStream->doClose();
     }
-
 }
 
 
@@ -202,20 +202,69 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
             return $this->openDocker($containerId, $clientConn);
         } else if (array_key_exists('log_container_id', $jsonMsg)) {
             $containerId = $jsonMsg['log_container_id'];
-            $followLogs = False;
-            if (array_key_exists('follow', $jsonMsg)) {
-                $followLogs = $jsonMsg['follow'];
-            }
-            return $this->openLogs($containerId, $followLogs, $clientConn, $jsonMsg);
+            return $this->openLogs($containerId, $clientConn, $jsonMsg);
+        } else if (array_key_exists('load_image', $jsonMsg)) {
+            $image = $jsonMsg['load_image'];
+            return $this->initLoadImage($image, $clientConn, $jsonMsg);
         } else {
             fwrite(STDERR, "Unrecognized init message\n");
             return array(null, false);
         }
     }
 
-    private function openLogs($containerId, $followLogs, ConnectionInterface $clientConnection, array $jsonMsg) {
+    private function initLoadImage(string $image, ConnectionInterface $clientConnection, array $jsonMsg) {
+
+        $tag = "";
+        $auth = null;
+
+        if (array_key_exists('tag', $jsonMsg)) {
+            $tag = $jsonMsg['tag'];
+        }
+
+        if (array_key_exists('authtoken', $jsonMsg)) {
+            $auth = new DockerEngineAuthentication(null, null, $jsonMsg['authtoken']);
+
+        } else if (array_key_exists('username', $jsonMsg) &&
+                   array_key_exists('password', $jsonMsg)) {
+            $auth = new DockerEngineAuthentication($jsonMsg['username'], $jsonMsg['password'], null);
+        }
+        fwrite(STDERR, "initLoadImage {$image} {$tag}\n");
+
+        $dockerSocket = DockerEngineApi::openDockerSocket();
+        if ($dockerSocket === false) {
+            fwrite(STDERR, "not socket, docker not running\n");
+            $clientConnection->close();
+        }
+
+        $socketState = new DockerCommonBinaryStreamCtx($this, $clientConnection, $dockerSocket);
+        $api = new DockerEngineApi($dockerSocket, $socketState->getChunkConsumerInterface());
+
+        list ($ok) = $api->imagePull($image, $auth, $tag);
+        $auth = null;
+
+        if ($ok) {
+            try {
+                $this->loop->addReadStream($dockerSocket, function ($sock) use ($socketState) {
+                    $socketState->handleData();
+                });
+                return array($socketState, false);
+            } catch (Exception $ex) {
+                fwrite(STDERR, "can't add handlers {$ex}. very bad.\n");
+            }
+        } else {
+            fwrite(STDERR, "handshake failed\n");
+        }
+        return array(null, false);
+    }
+
+    private function openLogs($containerId, ConnectionInterface $clientConnection, array $jsonMsg) {
         $from = -1;
         $to = -1;
+        $followLogs = False;
+
+        if (array_key_exists('follow', $jsonMsg)) {
+            $followLogs = $jsonMsg['follow'];
+        }
 
         if (array_key_exists('since', $jsonMsg)) {
             $from = $jsonMsg['since'];
@@ -233,7 +282,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
             $clientConnection->close();
         }
 
-        $socketState = new DockerLogsBinaryStreamCtx($this, $clientConnection, $dockerSocket);
+        $socketState = new DockerCommonBinaryStreamCtx($this, $clientConnection, $dockerSocket);
         $logHandshake = new DockerEngineApi($dockerSocket, $socketState->getChunkConsumerInterface());
 
         list ($ok) = $logHandshake->containerLogs($containerId, $followLogs, $from, $to);
@@ -251,6 +300,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
         }
         return array(null, false);
     }
+
 
     private function openDocker($containerId, ConnectionInterface $clientConnection) {
 

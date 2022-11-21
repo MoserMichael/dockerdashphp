@@ -10,6 +10,7 @@ require_once __DIR__ . "/hdr.php";
 
 show_hdr(2);
 ?>
+
 <h3>Pulling docker image</h3>
 <form action="/gen.php">
     <input type="hidden" name="cmd" value="pull"/>
