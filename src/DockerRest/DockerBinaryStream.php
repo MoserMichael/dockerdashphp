@@ -11,7 +11,7 @@ class DockerBinaryStreamBase  {
     private int $msgType;
     private int $msgLen;
     private bool $passThrough;
-    protected static $TRACE = false;  // set to on for tracing of requests/responses
+    protected static $TRACE = true;  // set to on for tracing of requests/responses
 
     const StateParseDockerMessageHeader = 1;
     const StateParseDockerMessageBody = 2;
@@ -174,7 +174,7 @@ class DockerBinaryStream extends DockerBinaryStreamBase
         return fwrite($this->dockerSocket, $msg);
     }
     
-    public function handleData() {
+    public function handleReadData() {
 
         $data = fread($this->dockerSocket, 4096);
 

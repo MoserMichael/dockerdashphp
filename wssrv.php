@@ -27,8 +27,8 @@ class DockerCommonBinaryStreamCtx implements DockerBinaryStreamHandler {
     private MessageComponentInterface $component;
     private ConnectionInterface $clientConnection;
     private EventDrivenChunkParser $dockerBinaryStream;
-    private ChunkConsumerInterface $chunkConsumer;
-
+    private DockerBinaryStreamChunkConsumer $chunkConsumer;
+    private $streamy;
 
     public function __construct(MessageComponentInterface $component, ConnectionInterface $clientConnection, $dockerSocket) {
         $this->component = $component;
@@ -37,6 +37,40 @@ class DockerCommonBinaryStreamCtx implements DockerBinaryStreamHandler {
         $this->dockerBinaryStream = new EventDrivenChunkParser($dockerSocket, $this->chunkConsumer);
 
         $this->dockerBinaryStream->consumeData();
+
+        $this->hackItAndSetStream($clientConnection);
+    }
+    
+    private function hackItAndSetStream(ConnectionInterface $clientConnection) {
+        $ty = get_class($clientConnection);
+        //$tt = $clientConnection->getConnection();
+
+        $r = new ReflectionMethod('Ratchet\WebSocket\WsConnection', 'getConnection');
+        $r->setAccessible(true);
+        $d = $r->invoke($this->clientConnection);
+        $t = get_class($d);
+
+        $r = new ReflectionProperty("Ratchet\Server\IoConnection","conn");
+        $r->setAccessible(true);
+        $dd = $r->getValue($d);
+        $tt = get_class($dd);
+
+        $r = new ReflectionProperty("React\Socket\Connection","input");
+        $r->setAccessible(true);
+        $ddd = $r->getValue($dd);
+        $ttt = get_class($ddd);
+
+        $r = new ReflectionProperty("React\Stream\DuplexResourceStream","buffer");
+        $r->setAccessible(true);
+        $dddd = $r->getValue($ddd);
+        $tttt = get_class($dddd);
+
+        $r = new ReflectionProperty("React\Stream\WritableResourceStream","stream");
+        $r->setAccessible(true);
+
+        //fwrite(STDERR,"nested classes: {$ty} {$t} {$tt} {$ttt} {$tttt}\n");
+
+        $this->streamy = $r->getValue($dddd);
     }
 
     public function getChunkConsumerInterface() : ChunkConsumerInterface {
@@ -47,15 +81,23 @@ class DockerCommonBinaryStreamCtx implements DockerBinaryStreamHandler {
         return $this->dockerBinaryStream->getSocket();
     }
 
-    public function handleData() : void {
-        $this->dockerBinaryStream->handleData();
+    public function handleReadData() : void {
+        $this->dockerBinaryStream->handleReadData();
     }
 
     // upon reading a message from the docker socket
     public function onMessage($msg) {
         $arr = array("data" => $msg);
         $json_data = json_encode($arr);
-        $this->clientConnection->send($json_data); // how do I check that it succeeded?
+
+
+        $f = new \Ratchet\RFC6455\Messaging\Frame($json_data);
+        fwrite($this->streamy, $f->getContents());
+
+
+        //$this->clientConnection->send($json_data); // how do I check that it succeeded?
+        // it didn't help to call drain on any of the nested ratchet objects....
+        //$dddd->emit('drain');
     }
 
     public function onClose() {
@@ -98,15 +140,17 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
         return $this->dockerBinaryStream->getSocket();
     }
 
-    public function handleData() : void {
-        $this->dockerBinaryStream->handleData();
+    public function handleReadData() : void {
+        $this->dockerBinaryStream->handleReadData();
     }
 
     // upon reading a message from the docker socket
     public function onMessage($msg) {
         $arr = array("data" => $msg);
         $json_data = json_encode($arr);
-        $this->clientConnection->   send($json_data); // how do I check that it succeeded?
+
+        $this->clientConnection->send($json_data); // how do I check that it succeeded?
+        flush(); //?
     }
 
     public function onClose() {
@@ -128,7 +172,7 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
     }
 }
 
-class WebsocketToTerminalComponent implements MessageComponentInterface {
+class WebsocketConnectionComponent implements MessageComponentInterface {
     public LoopInterface $loop;
     public array $mapConnToHandler;
 
@@ -199,7 +243,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
 
         if (array_key_exists('docker_container_id', $jsonMsg)) {
             $containerId = $jsonMsg['docker_container_id'];
-            return $this->openDocker($containerId, $clientConn);
+            return $this->consoleAttachToDocker($containerId, $clientConn);
         } else if (array_key_exists('log_container_id', $jsonMsg)) {
             $containerId = $jsonMsg['log_container_id'];
             return $this->openLogs($containerId, $clientConn, $jsonMsg);
@@ -207,7 +251,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
             $image = $jsonMsg['load_image'];
             return $this->initLoadImage($image, $clientConn, $jsonMsg);
         } else {
-            fwrite(STDERR, "Unrecognized init message\n");
+            fwrite(STDERR, "Unrecognized  message\n");
             return array(null, false);
         }
     }
@@ -245,7 +289,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
         if ($ok) {
             try {
                 $this->loop->addReadStream($dockerSocket, function ($sock) use ($socketState) {
-                    $socketState->handleData();
+                    $socketState->handleReadData();
                 });
                 return array($socketState, false);
             } catch (Exception $ex) {
@@ -289,7 +333,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
         if ($ok) {
             try {
                 $this->loop->addReadStream($dockerSocket, function ($sock) use ($socketState) {
-                    $socketState->handleData();
+                    $socketState->handleReadData();
                 });
                 return array($socketState, false);
             } catch (Exception $ex) {
@@ -302,7 +346,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
     }
 
 
-    private function openDocker($containerId, ConnectionInterface $clientConnection) {
+    private function consoleAttachToDocker($containerId, ConnectionInterface $clientConnection) {
 
         $socketHandshake = new DockerEngineApi();
         $dockerSocket = $socketHandshake->getSocket();
@@ -314,7 +358,7 @@ class WebsocketToTerminalComponent implements MessageComponentInterface {
                 try {
                     $socketState = new DockerConsoleBinaryStreamCtx( $this, $clientConnection, $dockerSocket, $execId);
                     $this->loop->addReadStream($dockerSocket, function ($sock) use ($socketState) {
-                        $socketState->handleData($sock);
+                        $socketState->handleReadData($sock);
                     });
                     return array($socketState, false);
                 } catch (Exception $ex) {
@@ -357,7 +401,7 @@ $listenPort = 8002;
 
 function runServer($listenPort) : void {
 
-    $docker = new WebsocketToTerminalComponent();
+    $docker = new WebsocketConnectionComponent();
     $loop = Loop::get();
     $server = IoServer::factory(
         new HttpServer(

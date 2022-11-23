@@ -11,6 +11,9 @@ test: ./${TESTS_DIR}
 run:
 	./run.sh 2>&1 | tee run.log
 
+runphp:
+	NUM_WORKERS=10 php -S "0.0.0.0:8001" -t src
+
 update: composer.json
 	composer update
 

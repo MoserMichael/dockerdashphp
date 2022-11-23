@@ -14,8 +14,8 @@ interface ChunkConsumerInterface {
 class HttpHandler {
     const EOF_HDR = "\r\n\r\n";
     const EOF_LINE = "\r\n";
-    private static $TRACE = false;  // set to on for tracing of requests/responses
-    private static $TRACE_CHUNK = false;  // set to on for tracing of requests/responses
+    private static $TRACE = true;  // set to on for tracing of requests/responses
+    private static $TRACE_CHUNK = true;  // set to on for tracing of requests/responses
 
     protected $sock;
     protected string $buffer;
@@ -318,7 +318,7 @@ class EventDrivenChunkParser extends HttpHandler {
         fclose($this->sock);
     }
 
-    public function handleData() {
+    public function handleReadData() {
         
         $rd = $this->readSocket();
         $this->consumeData();

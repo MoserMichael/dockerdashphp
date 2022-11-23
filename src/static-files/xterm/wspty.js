@@ -11,6 +11,7 @@ WsptyClient.prototype.connect = function(options) {
     };
 
     this._connection.onmessage = function(evt) {
+        console.log('onmessage:', evt.data);
         var data = JSON.parse(evt.data);
         if (data.error !== undefined) {
             options.onError(data.error);

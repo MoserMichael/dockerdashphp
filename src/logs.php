@@ -187,8 +187,7 @@ function sendLogRequest(follow_logs, since_time_sec, until_time_sec) {
     doClose();
 
     socket = new WebSocket(url);
-
-
+    
     socket.addEventListener('message', (event) => {
         console.log('Message from server ', event.data);
         let data = JSON.parse(event.data);

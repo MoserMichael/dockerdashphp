@@ -136,7 +136,7 @@ class DockerEngineApi extends HttpHandler {
         }
 
         $url = "/{$ver}/images/create?fromImage={$imageName}{$urlArg}";
-        return $this->sendCommonRequest($url, null, 200, self::MethodGet, $hdr, $data);
+        return $this->sendCommonRequest($url, null, 200, self::MethodPost, $hdr, $data);
     }
 
 
