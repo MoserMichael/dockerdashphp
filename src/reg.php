@@ -162,13 +162,18 @@ function onProgress(data) {
     let json = JSON.parse(data);
 
     if (json.id === undefined) {
+        let msg = "";
         if (json.status !== undefined) {
-            document.getElementById('download_progress').innerHTML = json.status;
-        } else if (json.message != undefined) {
-            document.getElementById('download_progress').innerHTML = json.message;
+            msg = json.status;
+        } else if (json.message !== undefined) {
+            msg = json.message;
+        } else if (json.error !== undefined) {
+            msg = json.error;
+        } else {
+            msg = JSON.stringify(json);
         }
-
-        return false;
+        progress[666] = msg;
+        return true;
     }
 
     let id = json.id;

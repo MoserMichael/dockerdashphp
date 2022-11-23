@@ -105,6 +105,15 @@ function make_container_resume($id) {
     return array("Failed to pause container {$id} : " . $msgRaw);
 }
 
+function make_container_kill($id) {
+    $runner = new DockerRest\DockerEngineApi();
+    list($ok, $msgRaw) = $runner->containerKill($id);
+    if ($msgRaw) {
+        return array("Container {$id} killed");
+    }
+    return array("Failed to kill container {$id} : " . $msgRaw);
+}
+
 function make_container_stop($id) {
     $runner = new DockerRest\DockerEngineApi();
     list($ok, $msgRaw) = $runner->containerStop($id);
@@ -164,6 +173,14 @@ $cmd_def = array(
             False,
             "make_container_resume",
             ""),
+
+    'kill' => array("docker kill %s",
+        "Kill a running container",
+        "Kill a running container",
+        False,
+        "make_container_kill",
+        ""),
+
     'stop' => array(
             "docker stop %s",
             "Stop Container",

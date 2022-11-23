@@ -10,7 +10,7 @@ require_once __DIR__ . "/hdr.php";
 
 show_hdr(0);
 ?>
-[ <a href="/gen.php?cmd=cprune&id=a">Remove Unused Containers</a> ]
+[ <a href="/gen.php?cmd=cprune&id=a">Remove/Prune Unused Containers</a> ]
 
 <h3>Containers</h3>
 Command: <code>docker ps -a</code>
@@ -48,7 +48,8 @@ function make_docker_state_link($row_val, $json) : string {
     $links = "";
     if ($json["State"] == "running") {
         $links = "{$links}&nbsp;<a href='/gen.php?cmd=pause&id={$id}'>/Pause/</a>";
-        $links = "{$links}&nbsp; <a href='/gen.php?cmd=stop&id={$id}'>/Stop/</a>";
+        $links = "{$links}&nbsp;<a href='/gen.php?cmd=stop&id={$id}'>/Stop/</a>";
+        $links = "{$links}&nbsp;<a href='/gen.php?cmd=kill&id={$id}'>/Kill/</a>";
     }
     if ($row_val == "paused") {
         $links = "&nbsp;<a href='/gen.php?cmd=resume&id={$id}'>/Resume/</a>";
@@ -83,13 +84,12 @@ function make_api_status($row_val, $json) : string {
     if ($json["State"] == "running") {
         $links = "{$links}&nbsp;<a href='/gen.php?cmd=pause&id={$id}'>/Pause/</a>";
         $links = "{$links}&nbsp; <a href='/gen.php?cmd=stop&id={$id}'>/Stop/</a>";
+        $links = "{$links}&nbsp;<a href='/gen.php?cmd=kill&id={$id}'>/Kill/</a>";
     }
     if ($json["State"] == "paused") {
         $links = "{$links}&nbsp;<a href='/gen.php?cmd=resume&id={$id}'>/Resume/</a>";
     }
     return $json["State"] . " - " . $json["Status"] . " " . $links;
-
-
 }
 
 function make_api_names($row_val, $json) : string {

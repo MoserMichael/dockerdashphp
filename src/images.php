@@ -10,7 +10,7 @@ require_once __DIR__ . "/hdr.php";
 
 show_hdr(1);
 ?>
-[ <a href="/gen.php?cmd=iprune&id=a">Remove Unused Images</a> ]
+[ <a href="/gen.php?cmd=iprune&id=a">Remove/Prune Unused Images</a> ]
 <h3>Images</h3>
 Command: <code>docker image ls -a</code>
 

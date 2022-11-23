@@ -80,22 +80,25 @@ class DockerEngineApi extends HttpHandler {
         return $this->sendCommonRequest($url, null, 200, self::MethodGet);
     }
 
-    public function containerPause($id)
-    {
+    public function containerPause($id) {
         $ver = self::$dockerApiVersion;
         $url = "/{$ver}/containers/{$id}/pause";
         return $this->sendCommonRequest($url, null, 204, self::MethodPost);
     }
 
-    public function containerStop(string $id)
-    {
+    public function containerStop(string $id) {
         $ver = self::$dockerApiVersion;
         $url = "/{$ver}/containers/{$id}/stop";
         return $this->sendCommonRequest($url, null, 204, self::MethodPost);
     }
 
-    public function containerResume(string $id)
-    {
+    public function containerKill(string $id) {
+        $ver = self::$dockerApiVersion;
+        $url = "/{$ver}/containers/{$id}/kill";
+        return $this->sendCommonRequest($url, null, 204, self::MethodPost);
+    }
+
+    public function containerResume(string $id) {
         $ver = self::$dockerApiVersion;
         $url = "/{$ver}/containers/{$id}/unpause";
         return $this->sendCommonRequest($url, null, 204, self::MethodPost);
@@ -109,8 +112,7 @@ class DockerEngineApi extends HttpHandler {
 
     }
 
-    public function containerProcessList(string $id)
-    {
+    public function containerProcessList(string $id) {
         $ver = self::$dockerApiVersion;
         $url = "/{$ver}/containers/{$id}/top";
         return $this->sendCommonRequest($url, null, 200, self::MethodGet);

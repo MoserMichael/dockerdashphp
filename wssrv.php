@@ -40,37 +40,49 @@ class DockerCommonBinaryStreamCtx implements DockerBinaryStreamHandler {
 
         $this->hackItAndSetStream($clientConnection);
     }
-    
+
+    // if I send something over ConnectionInterface, then that gets buffered here, without the option of flushing the buffer.
+    // therefore: get the raw stream/fd handler.
+    // Achtung Achtung!
     private function hackItAndSetStream(ConnectionInterface $clientConnection) {
+        $t = $tt = $ttt = $tttt = "";
         $ty = get_class($clientConnection);
-        //$tt = $clientConnection->getConnection();
 
-        $r = new ReflectionMethod('Ratchet\WebSocket\WsConnection', 'getConnection');
-        $r->setAccessible(true);
-        $d = $r->invoke($this->clientConnection);
-        $t = get_class($d);
+        if ($ty == "Ratchet\WebSocket\WsConnection") {
+            $r = new ReflectionMethod('Ratchet\WebSocket\WsConnection', 'getConnection');
+            $r->setAccessible(true);
+            $d = $r->invoke($this->clientConnection);
+            $t = get_class($d);
 
-        $r = new ReflectionProperty("Ratchet\Server\IoConnection","conn");
-        $r->setAccessible(true);
-        $dd = $r->getValue($d);
-        $tt = get_class($dd);
+            if ($t == "Ratchet\Server\IoConnection") {
 
-        $r = new ReflectionProperty("React\Socket\Connection","input");
-        $r->setAccessible(true);
-        $ddd = $r->getValue($dd);
-        $ttt = get_class($ddd);
+                $r = new ReflectionProperty("Ratchet\Server\IoConnection", "conn");
+                $r->setAccessible(true);
+                $dd = $r->getValue($d);
+                $tt = get_class($dd);
 
-        $r = new ReflectionProperty("React\Stream\DuplexResourceStream","buffer");
-        $r->setAccessible(true);
-        $dddd = $r->getValue($ddd);
-        $tttt = get_class($dddd);
+                if ($tt == "React\Socket\Connection") {
+                    $r = new ReflectionProperty("React\Socket\Connection", "input");
+                    $r->setAccessible(true);
+                    $ddd = $r->getValue($dd);
+                    $ttt = get_class($ddd);
 
-        $r = new ReflectionProperty("React\Stream\WritableResourceStream","stream");
-        $r->setAccessible(true);
+                    if ($ttt == "React\Stream\DuplexResourceStream") {
+                        $r = new ReflectionProperty("React\Stream\DuplexResourceStream", "buffer");
+                        $r->setAccessible(true);
+                        $dddd = $r->getValue($ddd);
+                        $tttt = get_class($dddd);
 
-        //fwrite(STDERR,"nested classes: {$ty} {$t} {$tt} {$ttt} {$tttt}\n");
-
-        $this->streamy = $r->getValue($dddd);
+                        if ($tttt == "React\Stream\WritableResourceStream" ) {
+                            $r = new ReflectionProperty("React\Stream\WritableResourceStream", "stream");
+                            $r->setAccessible(true);
+                            $this->streamy = $r->getValue($dddd);
+                        }
+                    }
+                }
+            }
+        }
+        fwrite(STDERR, "nested classes: {$ty} {$t} {$tt} {$ttt} {$tttt}\n");
     }
 
     public function getChunkConsumerInterface() : ChunkConsumerInterface {
@@ -92,8 +104,13 @@ class DockerCommonBinaryStreamCtx implements DockerBinaryStreamHandler {
 
 
         $f = new \Ratchet\RFC6455\Messaging\Frame($json_data);
-        fwrite($this->streamy, $f->getContents());
 
+        try {
+            fwrite($this->streamy, $f->getContents());
+        } catch(Exception $e) {
+            fwrite(STDERR,"fwrite error {$e}\n");
+            onClose();
+        }
 
         //$this->clientConnection->send($json_data); // how do I check that it succeeded?
         // it didn't help to call drain on any of the nested ratchet objects....
@@ -307,7 +324,7 @@ class WebsocketConnectionComponent implements MessageComponentInterface {
         $followLogs = False;
 
         if (array_key_exists('follow', $jsonMsg)) {
-            $followLogs = $jsonMsg['follow'];
+            $followLogs = $jsonMsg['follow'] === true ? "true" : "false";
         }
 
         if (array_key_exists('since', $jsonMsg)) {
