@@ -62,6 +62,32 @@ class DockerEngineApi extends HttpHandler {
         parent::__construct($sock, $chunkConsumer);
     }
 
+    public function copyTarFileToContainer(string $id, string $localPath, string $containerPath) {
+        $ver = self::$dockerApiVersion;
+        $url = "/{$ver}/containers/{$id}/archive?path={$containerPath}";
+        $hdr = "Content-Type: application/x-tar";
+        $body = file_get_contents($localPath);
+
+        $len = strlen($body);
+        fwrite(STDERR, "sending file {{$localPath} payload len: {$len}\n");
+
+        return $this->sendCommonRequest($url, $body, 200, self::MethodPut, $hdr);
+    }
+
+    public function containerCreate(string $id, string $body)
+    {
+        $ver = self::$dockerApiVersion;
+        $url = "/{$ver}/containers/{$id}/create";
+        return $this->sendCommonRequest($url, $body, 204, self::MethodPost);
+    }
+
+    public function containerStart(string $id)
+    {
+        $ver = self::$dockerApiVersion;
+        $url = "/{$ver}/containers/{$id}/start";
+        return $this->sendCommonRequest($url, null, 204, self::MethodPost);
+    }
+
     public function containerLogs(string $id, $followLogs, $from = -1, $to = -1) {
         $ver = self::$dockerApiVersion;
         

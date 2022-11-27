@@ -88,154 +88,149 @@ if (!use_docker_api()) {
     </tr>
 </table>
 
+<script  src="/static-files/utils.js"></script>
+    
 <script>
-var socket;
-
-function show_rows(rows, on) {
-    let r = "";
-    for(r of rows) {
-        document.getElementById(r).style = on ? "visibility: visible" : "visibility: collapse";
-    }
-}
-
-function show_load_input(on) {
-    let rows = ["row1", "row2", "row3", "auth_user_password_tr", "auth_token_tr", "row4"];
-    show_rows(rows, on);
-}
-
-function show_progress(on) {
-    let rows = ["loading_image_tr"];
-    show_rows(rows, on);
-}
-
-function onPullImage() {
-    let wsProtocol = location.protocol === 'http:' ? 'ws' : 'wss';
-    let port = parseInt(location.port) + 1;
-    let url = wsProtocol + '://' + location.hostname + ':' + port + '/wsconn.php';
-
-    socket = new WebSocket(url);
-
-    socket.addEventListener('message', (event) => {
-        let date = new Date().toJSON();
-        console.log('Message from server ', date, event.data);
-
-        let data = JSON.parse(event.data);
-        if (onDownloadProgress(data)) {
-               showProgress();
-        }
-    });
-
-    socket.addEventListener('open', (event) => {
-        show_load_input(false);
-        show_progress(true);
-        initProgress();
-        sendDownloadRequest();
-    });
+    var socket;
 
 
-}
-
-let progress= {};
-
-function initProgress() {
-    progress= {};
-    document.getElementById('download_progress').innerHTML = '';
-}
-
-function showProgress() {
-    let msg = "";
-    for (const [key, value] of Object.entries(progress)) {
-        msg += value + '<br/>';
-    }
-    document.getElementById('download_progress').innerHTML = msg;
-
-}
-
-function onProgress(data) {
-    data = data.trim();
-    if (data === "") {
-        return true;
+    function show_load_input(on) {
+        let rows = ["row1", "row2", "row3", "auth_user_password_tr", "auth_token_tr", "row4"];
+        show_rows(rows, on);
     }
 
-    console.log("json<" + data + ">");
+    function show_progress(on) {
+        let rows = ["loading_image_tr"];
+        show_rows(rows, on);
+    }
 
-    let json = JSON.parse(data);
+    function onPullImage() {
+        let wsProtocol = location.protocol === 'http:' ? 'ws' : 'wss';
+        let port = parseInt(location.port) + 1;
+        let url = wsProtocol + '://' + location.hostname + ':' + port + '/wsconn.php';
 
-    if (json.id === undefined) {
+        socket = new WebSocket(url);
+
+        socket.addEventListener('message', (event) => {
+            let date = new Date().toJSON();
+            console.log('Message from server ', date, event.data);
+
+            let data = JSON.parse(event.data);
+            if (onDownloadProgress(data)) {
+                   showProgress();
+            }
+        });
+
+        socket.addEventListener('open', (event) => {
+            show_load_input(false);
+            show_progress(true);
+            initProgress();
+            sendDownloadRequest();
+        });
+
+
+    }
+
+    let progress= {};
+
+    function initProgress() {
+        progress= {};
+        document.getElementById('download_progress').innerHTML = '';
+    }
+
+    function showProgress() {
         let msg = "";
-        if (json.status !== undefined) {
-            msg = json.status;
-        } else if (json.message !== undefined) {
-            msg = json.message;
-        } else if (json.error !== undefined) {
-            msg = json.error;
-        } else {
-            msg = JSON.stringify(json);
+        for (const [key, value] of Object.entries(progress)) {
+            msg += value + '<br/>';
         }
-        progress[666] = msg;
+        document.getElementById('download_progress').innerHTML = msg;
+
+    }
+
+    function onProgress(data) {
+        data = data.trim();
+        if (data === "") {
+            return true;
+        }
+
+        console.log("json<" + data + ">");
+
+        let json = JSON.parse(data);
+
+        if (json.id === undefined) {
+            let msg = "";
+            if (json.status !== undefined) {
+                msg = json.status;
+            } else if (json.message !== undefined) {
+                msg = json.message;
+            } else if (json.error !== undefined) {
+                msg = json.error;
+            } else {
+                msg = JSON.stringify(json);
+            }
+            progress[666] = msg;
+            return true;
+        }
+
+        let id = json.id;
+
+        if (id === "Download complete") {
+            //progress.delete(id);
+            progress[id] = json.progressDetail.id + ': ' + id;
+        } else {
+            let status = id + ': ' + json.status;
+
+            if (json.progressDetail !== undefined) {
+                let detail = json['progressDetail'];
+
+                if (detail.current !== undefined && detail.total !== undefined) {
+                    status += " " + detail.current + "/" + detail.total;
+                }
+            }
+            if (json.progress !== undefined) {
+                let p = json.progress;
+                status += " " + p.replace("\u003e", '');
+            }
+
+            progress[id] = status;
+        }
         return true;
     }
 
-    let id = json.id;
+    function onDownloadProgress(jsonData) {
+        let data = jsonData.data;
 
-    if (id === "Download complete") {
-        //progress.delete(id);
-        progress[id] = json.progressDetail.id + ': ' + id;
-    } else {
-        let status = id + ': ' + json.status;
-
-        if (json.progressDetail !== undefined) {
-            let detail = json['progressDetail'];
-
-            if (detail.current !== undefined && detail.total !== undefined) {
-                status += " " + detail.current + "/" + detail.total;
+        let lines = data.split(/\r?\n/);
+        for (const line of lines) {
+            if (!onProgress(line)) {
+                return false;
             }
         }
-        if (json.progress !== undefined) {
-            let p = json.progress;
-            status += " " + p.replace("\u003e", '');
+        return true;
+    }
+
+    function sendDownloadRequest() {
+        let image = document.getElementById('image').value;
+        let tag = document.getElementById('tag').value;
+
+        let json = JSON.stringify({
+            'load_image': image,
+            'tag': tag
+        });
+
+        let username = document.getElementById('username').value;
+        if (username != "") {
+            json['username'] = username;
+            let password = document.getElementById('password').value;
+            json['password'] = password;
         }
 
-        progress[id] = status;
-    }
-    return true;
-}
-
-function onDownloadProgress(jsonData) {
-    let data = jsonData.data;
-
-    let lines = data.split(/\r?\n/);
-    for (const line of lines) {
-        if (!onProgress(line)) {
-            return false;
+        let authtoken = document.getElementById('authtoken').value;
+        if (authtoken != "") {
+            json['authtoken'] = authtoken;
         }
+        socket.send(json);
     }
-    return true;
-
-}
-
-function sendDownloadRequest() {
-    let image = document.getElementById('image').value;
-    let tag = document.getElementById('tag').value;
-
-    let json = JSON.stringify({
-        'load_image': image,
-        'tag': tag
-    });
-
-    let username = document.getElementById('username').value;
-    if (username != "") {
-        json['username'] = username;
-        let password = document.getElementById('password').value;
-        json['password'] = password;
-    }
-
-    let authtoken = document.getElementById('authtoken').value;
-    if (authtoken != "") {
-        json['authtoken'] = authtoken;
-    }
-    socket.send(json);
-}
 
 </script>
 

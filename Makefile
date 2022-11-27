@@ -5,7 +5,6 @@ TESTS_DIR := tests
 
 test: ./${TESTS_DIR}
 	./vendor/bin/phpunit ${PHPUNIT_FLAGS} --configuration ./${TESTS_DIR}/phpunit.xml $</$(patsubst $(TESTS_DIR)/%,%,$(TEST_FILE)) 2>&1 | tee test.log
- 
 	date
 
 run:
@@ -17,13 +16,18 @@ runphp:
 update: composer.json
 	composer update
 
-install: update
+install: update download-shells
 	composer install
 
+download-shells:
+	mkdir shells  || true
+	./make-shells.sh
+	./download-github-artifacts.sh -u robxu9 -r bash-static -o shells
+
 container-build:
-		git clean -f -d
-		docker build -f Dockerfile -t ghcr.io/mosermichael/phpdocker-mm:latest . 2>&1 | tee container-build.log
+	git clean -f -d
+	docker build -f Dockerfile -t ghcr.io/mosermichael/phpdocker-mm:latest . 2>&1 | tee container-build.log
 
 container-push:
-		./container-push.sh ghcr.io/mosermichael/phpdocker-mm latest
+	./container-push.sh ghcr.io/mosermichael/phpdocker-mm latest
 

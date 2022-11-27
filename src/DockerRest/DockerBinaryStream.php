@@ -165,8 +165,13 @@ class DockerBinaryStream extends DockerBinaryStreamBase
         return $this->dockerSocket;
     }
 
+    public function setDockerSocker($sock) {
+        $this->dockerSocket = $sock;
+    }
+
     public function doClose() {
         fclose($this->dockerSocket);
+        $this->dockerSocket = null;
     }
 
     // send data to docker socket (input data has been read from web socket)

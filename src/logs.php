@@ -92,6 +92,9 @@ function initialLogRequest() {
     window.onunload = window.onbeforeunload = function() {
         doClose();
     }
+    window.onunload = window.beforeunload = function() {
+        doClose();
+    }
     doLogRequest();
 }
 

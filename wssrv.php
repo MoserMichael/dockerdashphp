@@ -3,6 +3,7 @@ require_once __DIR__ . "/vendor/autoload.php";
 require_once __DIR__ . "/src/base/runner.php";
 require_once __DIR__ . "/src/DockerRest/DockerRest.php";
 require_once __DIR__ . "/src/DockerRest/DockerBinaryStream.php";
+require_once __DIR__ . "/ConsoleAttach.php";
 
 use \DockerRest\DockerEngineApi;
 use \DockerRest\DockerBinaryStreamHandler;
@@ -105,11 +106,12 @@ class DockerCommonBinaryStreamCtx implements DockerBinaryStreamHandler {
 
         $f = new \Ratchet\RFC6455\Messaging\Frame($json_data);
 
-        try {
-            fwrite($this->streamy, $f->getContents());
-        } catch(Exception $e) {
-            fwrite(STDERR,"fwrite error {$e}\n");
-            onClose();
+        stream_set_blocking($this->streamy, true); 
+        $ret = @fwrite($this->streamy, $f->getContents());
+        stream_set_blocking($this->streamy, false);
+        
+        if ($ret === false) {
+            $this->onClose();
         }
 
         //$this->clientConnection->send($json_data); // how do I check that it succeeded?
@@ -118,6 +120,10 @@ class DockerCommonBinaryStreamCtx implements DockerBinaryStreamHandler {
     }
 
     public function onClose() {
+        if ($this->streamy != null) {
+            fclose($this->streamy);
+            $this->streamy = null;
+        }
         $this->component->onClose($this->clientConnection);
     }
 
@@ -130,64 +136,13 @@ class DockerCommonBinaryStreamCtx implements DockerBinaryStreamHandler {
 
     public function doClose() {
         $this->dockerBinaryStream->doClose();
+        if ($this->streamy != null) {
+            fclose($this->streamy);
+            $this->streamy = null;
+        }
     }
 }
 
-
-class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
-
-    private MessageComponentInterface $component;
-    private ConnectionInterface $clientConnection;
-    private DockerBinaryStream $dockerBinaryStream;
-    private string $execId;
-
-
-    public function __construct(MessageComponentInterface $component, ConnectionInterface $clientConnection, $dockerSocket, string $execId ) {
-        $this->component = $component;
-        $this->clientConnection = $clientConnection;
-        $this->dockerBinaryStream = new DockerBinaryStream($dockerSocket, $this);
-        $this->execId = $execId;
-    }
-
-    public function getExecId() : string {
-        return $this->execId;
-    }
-
-    public function getSocket() {
-        return $this->dockerBinaryStream->getSocket();
-    }
-
-    public function handleReadData() : void {
-        $this->dockerBinaryStream->handleReadData();
-    }
-
-    // upon reading a message from the docker socket
-    public function onMessage($msg) {
-        $arr = array("data" => $msg);
-        $json_data = json_encode($arr);
-
-        $this->clientConnection->send($json_data); // how do I check that it succeeded?
-        flush(); //?
-    }
-
-    public function onClose() {
-        $this->component->onClose($this->clientConnection);
-    }
-
-    // send data to docker socket (input data has been read from web socket)
-    public function sendToDocker($msg) {
-        return $this->dockerBinaryStream->sendToDocker($msg);
-    }
-
-    public function getDockerSocker() {
-        return $this->dockerBinaryStream->getDockerSocker();
-    }
-
-    public function doClose() {
-        $this->sendToDocker("exit\r\n");
-        $this->dockerBinaryStream->doClose();
-    }
-}
 
 class WebsocketConnectionComponent implements MessageComponentInterface {
     public LoopInterface $loop;
@@ -260,7 +215,7 @@ class WebsocketConnectionComponent implements MessageComponentInterface {
 
         if (array_key_exists('docker_container_id', $jsonMsg)) {
             $containerId = $jsonMsg['docker_container_id'];
-            return $this->consoleAttachToDocker($containerId, $clientConn);
+            return DockerConsoleBinaryStreamCtx::consoleAttachToDocker($containerId, $clientConn, $this, $this->loop);
         } else if (array_key_exists('log_container_id', $jsonMsg)) {
             $containerId = $jsonMsg['log_container_id'];
             return $this->openLogs($containerId, $clientConn, $jsonMsg);
@@ -409,6 +364,7 @@ class WebsocketConnectionComponent implements MessageComponentInterface {
         if (array_key_exists("cols", $ret) && array_key_exists("rows", $ret)) {
             $http = new DockerEngineApi();
             $http->execResize($handler->getExecId(), intval($ret['rows']), intval($ret['cols']));
+            $http->close();
         }
     }
 }

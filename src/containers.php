@@ -37,7 +37,7 @@ function make_docker_inspect_link($row_val, $json) : string {
         $ps = "{$ps}&nbsp;<a href='/attach.php?id={$id}'><br/><b>/Console/</b></a>";
     }
 
-    return "<a title='inspect' href='/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/logs.php?id={$row_val}&since=10m'>/logs/</a>{$ps}";
+    return "<a title='inspect container' href='/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/logs.php?id={$row_val}&since=10m'>/logs/</a>{$ps}";
 
     //return "<a title='inspect' href='/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/logs.php?id={$row_val}&since=10m'>/logs/</a>";
 
@@ -60,21 +60,23 @@ function make_docker_state_link($row_val, $json) : string {
 
 
 function make_api_id($row_val, $json) : string {
-
-    $ps="";
     $state = $json["State"];
+
+    $ps = "";
+    
     if ($state == "running") {
-        $ps="&nbsp; <a href='/gen.php?cmd=top&id={$row_val}'>/top/</a> &nbsp; <a href='/gen.php?cmd=stats&id={$row_val}'>/stats/</a>";
+        $ps="<a href='/gen.php?cmd=top&id={$row_val}'>/top/</a>&nbsp;";
+        $ps="{$ps}<a href='/gen.php?cmd=stats&id={$row_val}'>/stats/</a>&nbsp;";
     }
 
     $id= substr($row_val, 0, 12);
 
+    $ps = "{$ps}<a href='/logs.php?id={$id}&since=10m'>/logs/</a>";
     if ($state == "running") {
-        $ps = "{$ps}&nbsp;<a href='/attach.php?id={$id}'><br/><b>/Console/</b></a>";
+        $ps = "{$ps}&nbsp;<br/><a href='/attach.php?id={$id}'><b>/Console/</b></a>";
     }
 
-    return "<a title='inspect' href='/gen.php?cmd=inspectc&id={$id}'>{$id}</a>&nbsp; <a href='/logs.php?id={$id}&since=10m'>/logs/</a>{$ps}";
-
+    return "<a title='inspect container' href='/gen.php?cmd=inspectc&id={$id}'>{$id}</a><br/>{$ps}";
 }
 
 
@@ -83,7 +85,7 @@ function make_api_status($row_val, $json) : string {
     $id = $json["Id"];
     if ($json["State"] == "running") {
         $links = "{$links}&nbsp;<a href='/gen.php?cmd=pause&id={$id}'>/Pause/</a>";
-        $links = "{$links}&nbsp; <a href='/gen.php?cmd=stop&id={$id}'>/Stop/</a>";
+        $links = "{$links}&nbsp;<a href='/gen.php?cmd=stop&id={$id}'>/Stop/</a>";
         $links = "{$links}&nbsp;<a href='/gen.php?cmd=kill&id={$id}'>/Kill/</a>";
     }
     if ($json["State"] == "paused") {
@@ -133,7 +135,7 @@ function make_api_image($row_val, $json) : string {
     if (str_starts_with($row_val, "sha256:")) {
         $hash = substr($row_val, strlen("sha256:"), 12);
     }
-    $link = "<a title='inspect' href='/gen.php?cmd=inspecti&id={$hash}'>{$hash}</a>";
+    $link = "<a title='inspect image' href='/gen.php?cmd=inspecti&id={$hash}'>{$hash}</a>";
     return $link;
 }
 

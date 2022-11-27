@@ -25,7 +25,7 @@ function make_docker_inspect_link($row_val,$json) : string {
     $image = $json["ID"];
 
     $rmi="<a href='/gen.php?cmd=rmi&id={$row_val}'>/remove image/</a>";
-    $run="<a href='/run.php?ID={$image}'>/run/</a>";
+    $run="<a href='/run.php?ID={$image}'>/create & run/</a>";
 
     return "<a title='inspect' href='/gen.php?cmd=inspecti&id={$row_val}'>{$row_val}</a>&nbsp;{$rmi}&nbsp;{$run}";
 }
@@ -35,19 +35,25 @@ function make_api_id($row_val,$json) : string {
     $id = $json["Id"];
     $row_val = substr($id, strlen("sha256:"), 12);
     $image = $row_val;
+    $name = @$json["RepoTags"][0];
 
     $rmi="<a href='/gen.php?cmd=rmi&id={$row_val}'>/remove image/</a>";
-    $run="<a href='/run.php?ID={$image}'>/run/</a>";
+    $run="<a href='/run.php?ID={$image}&name={$name}'>/create & run/</a>";
 
-    return "<a title='inspect' href='/gen.php?cmd=inspecti&id={$row_val}'>{$row_val}</a>&nbsp;{$rmi}&nbsp;{$run}";
+    $link = make_inspect_imagelink($row_val);
+    return "&nbsp;{$link}<br/>{$rmi}&nbsp;{$run}";
 
+}
+
+function make_inspect_imagelink(string $value ) : string {
+    return "<a title='inspect image' href='/gen.php?cmd=inspecti&id={$value}'>{$value}</a>";
 }
 
 function make_api_repo_name($row_val,$json) : string
 {
     $tags = $json["RepoTags"];
     if ($tags != null) {
-        return implode(" ", $tags);
+        return implode(" ", array_map( "\make_inspect_imagelink", $tags ) );
     }
     return "";
 }

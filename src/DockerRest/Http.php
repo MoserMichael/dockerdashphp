@@ -39,6 +39,11 @@ class HttpHandler {
         $this->chunkConsumer = $chunkConsumer;
         $this->state = self::StateReadingChunkHdr;
     }
+    
+    public function close() {
+        fclose($this->sock);
+        $this->sock = null;
+    }
 
     public static function setTrace($trace, $dataTrace) {
         self::$TRACE = $trace;
@@ -47,6 +52,10 @@ class HttpHandler {
 
     public function getSocket() {
         return $this->sock;
+    }
+    
+    public function setSocket($sock) : void {
+        $this->sock = $sock;
     }
 
     public const MethodGet  = 1;
@@ -72,7 +81,7 @@ class HttpHandler {
     );
 
     protected function sendCommonRequest(string $url,
-                                         array $requestData = null,
+                                         $requestData = null,
                                          int $expectedStatus = 200,
                                          int $method = self::MethodPost,
                                          string $customHdr = "") : array {
@@ -92,14 +101,17 @@ class HttpHandler {
         return array(false, null, null);
     }
 
-    protected function sendHeaderCommon(string $url, $request = null, int $method = self::MethodPost, string $customHdr="") : bool {
+    protected function sendHeaderCommon(string $url, $request = null, int $method = self::MethodPost, string $customHdr="") : bool
+    {
         $json = "";
         $contentLen = "";
 
+        $showRequest = true;
         if ($request != null) {
             if (is_array($request)) {
                 $json = json_encode($request);
             } else if (is_string($request)) {
+                $showRequest = false;
                 $json = $request;
             } else {
                 fwrite(STDERR, "Can't send request, request param must be array or string\n");
@@ -111,21 +123,46 @@ class HttpHandler {
 
         $methodName = self::MethodNames[$method];
 
-
         $requestText
             = "{$methodName} {$url} HTTP/1.1\r\n" .
             "Host: localhost\r\n{$contentLen}Accept: */*\r\nContent-Type: application/json{$customHdr}\r\n\r\n{$json}";
 
-        if (self::$TRACE) {
+        if ($showRequest && self::$TRACE) {
             fwrite(STDERR, "Request\n=======\n{$requestText}\n");
         }
 
         $len = strlen($requestText);
+
+        /*
         if (fwrite($this->sock, $requestText) !== $len) {
-            fwrite(STDERR, "Can't send {$urlCommonPart} http request to docker socket\n");
+            fwrite(STDERR, "Can't send {$url} http request to docker socket\n");
             return false;
         }
-        return true;
+        */
+
+        stream_set_blocking($this->sock, true);
+        $retVal = true;
+        for($sendOffset=0;$sendOffset != $len;) {
+            if ($sendOffset != 0) {
+                $requestText = substr($requestText, $sendOffset);
+            }
+            $toSend = $len - $sendOffset;
+            $ret = @fwrite($this->sock, $requestText, $toSend);
+
+            fwrite(STDERR, "sending offset: {$sendOffset} Len: {$toSend}/{$len}\n");
+
+            if ($ret === false) {
+                $err = error_get_last();
+                $ty = $err['type'];
+                $ms = $err['message'];
+                fwrite(STDERR, "Error while sending http request. error: {$ty}:{$ms}\n");
+                $retVal = false;
+                break;
+            }
+            $sendOffset += $ret;
+        }
+        stream_set_blocking($this->sock, false);
+        return $retVal;
     }
 
     public function readHttpResponse() {
