@@ -317,35 +317,6 @@ class WebsocketConnectionComponent implements MessageComponentInterface {
         return array(null, false);
     }
 
-
-    private function consoleAttachToDocker($containerId, ConnectionInterface $clientConnection) {
-
-        $socketHandshake = new DockerEngineApi();
-        $dockerSocket = $socketHandshake->getSocket();
-
-        if ($dockerSocket !== false) {
-
-            list($state, $execId) = $socketHandshake->exec($containerId);
-            if ($state === true) {
-                try {
-                    $socketState = new DockerConsoleBinaryStreamCtx( $this, $clientConnection, $dockerSocket, $execId);
-                    $this->loop->addReadStream($dockerSocket, function ($sock) use ($socketState) {
-                        $socketState->handleReadData($sock);
-                    });
-                    return array($socketState, false);
-                } catch (Exception $ex) {
-                    fwrite(STDERR, "can't add handlers {$ex}. very bad.\n");
-                }
-            } else {
-                fwrite(STDERR, "handshake failed\n");
-            }
-        } else {
-            fwrite(STDERR, "not socket, docker not running\n");
-            $clientConnection->close();
-        }
-        return array(null, true);
-    }
-
     private function dataMessage($msg, $clientConnection, $handler) {
         $ret = json_decode($msg, true);
         if ($ret == null) {
