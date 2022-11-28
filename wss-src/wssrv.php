@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . "/vendor/autoload.php";
-require_once __DIR__ . "/src/base/runner.php";
-require_once __DIR__ . "/src/DockerRest/DockerRest.php";
-require_once __DIR__ . "/src/DockerRest/DockerBinaryStream.php";
+require_once __DIR__ . "/../vendor/autoload.php";
+require_once __DIR__ . "/../src/base/runner.php";
+require_once __DIR__ . "/../src/DockerRest/DockerRest.php";
+require_once __DIR__ . "/../src/DockerRest/DockerBinaryStream.php";
 require_once __DIR__ . "/ConsoleAttach.php";
 
 use \DockerRest\DockerEngineApi;

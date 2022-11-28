@@ -25,7 +25,7 @@ fi
 php -S "0.0.0.0:${PORT_PHP}" -t src &
 PID_PHP=$!
 
-php wssrv.php "${PORT_WSS}" &
+php wss-src/wssrv.php "${PORT_WSS}" &
 PID_WSOCK=$!
 
 trap ctrl_c INT EXIT

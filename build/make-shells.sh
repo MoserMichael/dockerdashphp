@@ -2,7 +2,9 @@
 
 set -ex
 
-./download-github-artifacts.sh -u robxu9 -r bash-static -o shells
+mkdir shells || true
+
+./build/download-github-artifacts.sh -u robxu9 -r bash-static -o shells
 
 TAR=tar
 if [[ $(uname) == "Darwin" ]]; then
@@ -31,6 +33,8 @@ for file in $(ls bash-*); do
     pwd
     
     ${TAR} -c -v --owner=0 --group=0 -f ${file}.tar ./bin
+
+    rm "${file}"
 done
 
 rm -rf bin

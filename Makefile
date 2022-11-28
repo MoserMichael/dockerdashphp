@@ -20,14 +20,12 @@ install: update download-shells
 	composer install
 
 download-shells:
-	mkdir shells  || true
-	./make-shells.sh
-	./download-github-artifacts.sh -u robxu9 -r bash-static -o shells
+	./build/make-shells.sh
 
 container-build:
 	git clean -f -d
 	docker build -f Dockerfile -t ghcr.io/mosermichael/phpdocker-mm:latest . 2>&1 | tee container-build.log
 
 container-push:
-	./container-push.sh ghcr.io/mosermichael/phpdocker-mm latest
+	./build/container-push.sh ghcr.io/mosermichael/phpdocker-mm latest
 
