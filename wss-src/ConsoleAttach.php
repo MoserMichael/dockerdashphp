@@ -30,7 +30,8 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
     private string $containerId;
     private string $execId;
     private int $msgCount;
-
+    private int $rows;
+    private int $cols;
 
     public function __construct(LoopInterface $loop, MessageComponentInterface $component, ConnectionInterface $clientConnection, $socket, string $execId, string $containerId) {
         $this->loop = $loop;
@@ -41,6 +42,8 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
         $this->execId = $execId;
         $this->containerId = $containerId;
         $this->msgCount = 0;
+        $this->rows = -1;
+        $this->cols = -1;
     }
 
     public static function consoleAttachToDocker($containerId, ConnectionInterface $clientConnection, MessageComponentInterface $component, LoopInterface $loop) : array {
@@ -91,17 +94,24 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
 
     // upon reading a message from the docker socket
     public function onMessage($msg) {
-        if ($this->msgCount < 10) {
+        if ($this->msgCount < 3) {
             if (str_starts_with($msg, ERROR_MSG)) {
-                $this->msgCount = 10;
+                $this->msgCount = 3;
                 if (!$this->onFailConnect()) {
                     $this->onClose();
                 }
                 return;
             }
         }
-        
+
         $this->msgCount += 1;
+
+        if ($this->rows != -1 && $this->cols != -1) {
+            fwrite(STDERR, "resize after connect rows: {$this->rows} cols: {$this->cols}\n");
+            $this->resize($this->rows, $this->cols);
+            $this->rows = -1;
+            $this->cols = -1;
+        }
 
         $arr = array("data" => $msg);
         $json_data = json_encode($arr);
@@ -149,10 +159,9 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
                 // run the init handshake again.
                 list($state, $execId) = $api->exec($this->containerId);
                 if ($state) {
-
                     $this->dockerBinaryStream->setDockerSocker( $api->getSocket() );
                     $this->addReadStream( $api->getSocket() );
-                    $this->containerId = $execId;
+                    $this->execId = $execId;
                     return true;
                 } else {
                     fwrite(STDERR, "Shell {$shellPath} not found. (after shell attach fail)\n");
@@ -218,6 +227,14 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
         return null;
     }
 
-
+    public function resize(int $rows, int $cols) : void {
+        $http = new DockerEngineApi();
+        list ($ok) = $http->execResize($this->execId, $rows, $cols);
+        if (!$ok) {
+            $this->rows = $rows;
+            $this->cols = $cols;
+        }
+        $http->close();
+    }
 
 }

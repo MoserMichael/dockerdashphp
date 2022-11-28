@@ -333,9 +333,7 @@ class WebsocketConnectionComponent implements MessageComponentInterface {
         }
 
         if (array_key_exists("cols", $ret) && array_key_exists("rows", $ret)) {
-            $http = new DockerEngineApi();
-            $http->execResize($handler->getExecId(), intval($ret['rows']), intval($ret['cols']));
-            $http->close();
+            $handler->resize(intval($ret['rows']), intval($ret['cols']));
         }
     }
 }
