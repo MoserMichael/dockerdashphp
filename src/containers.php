@@ -104,7 +104,7 @@ function make_api_created_at($row_val, $json) : string {
 }
 
 function make_api_networks($row_val, $json) : string {
-    $obj = $json['NetworkSettings']['Networks'];
+    $obj = @$json['NetworkSettings']['Networks'];
 
     $ret = "";
     foreach($obj as $key => $value) {
@@ -112,10 +112,10 @@ function make_api_networks($row_val, $json) : string {
     }
 
     foreach($json["Ports"] as $portDef) {
-       $ip = $portDef['IP'];
-       $from = $portDef['PrivatePort'];
-       $to = $portDef['PublicPort'];
-       $ty = $portDef['Type'];
+       $ip = @$portDef['IP'];
+       $from = @$portDef['PrivatePort'];
+       $to = @$portDef['PublicPort'];
+       $ty = @$portDef['Type'];
        $ret = $ret . "{$ip}:{$from}->{$to}/{$ty} ";
     }
     return $ret;
@@ -124,7 +124,7 @@ function make_api_networks($row_val, $json) : string {
 function make_api_mounts($row_val, $json) : string {
     $ret = "";
     foreach($json['Mounts'] as $key => $value) {
-        $ret = $ret . " " . $value['Source'] . " -> " . $value['Destination'] . " ";
+        $ret = $ret . " " . @$value['Source'] . " -> " . @$value['Destination'] . " ";
     }
     return $ret;
 }
