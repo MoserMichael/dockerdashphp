@@ -1,0 +1,6 @@
+FROM alpine:latest
+
+ENTRYPOINT [ "/bin/sleep", "infinity" ]
+
+
+

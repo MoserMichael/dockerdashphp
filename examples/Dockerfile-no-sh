@@ -1,0 +1,8 @@
+FROM alpine:latest
+
+RUN rm /bin/sh
+
+ENTRYPOINT [ "/bin/sleep", "infinity" ]
+
+
+
