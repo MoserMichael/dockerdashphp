@@ -1,0 +1,102 @@
+TODO:
+
+- general screens: add checkbox for 'show all containers/images' (-a option)
+
+- the way that i force ratchet to flush the write stream sucks. (but i don't know better).
+
+- must have some form of SSL
+    - container: must do SSL. Look how to run the show with apache.
+            https://hub.docker.com/_/php
+
+                FROM php:7.2-apache
+                COPY src/ /var/www/html/
+
+                docker run -d -p 80:80 --name my-apache-php-app -v "$PWD":/var/www/html php:7.2-apache
+
+    - ratchet: how to websocket server over SSL?
+        - https://github.com/ratchetphp/Ratchet/issues/609
+
+- ratchet: 'Closed without sending a request; it was probably just an unused speculative preconnection'
+    - for logs: helps to add the time - 10m (url differs each time)
+    
+- logs:
+    - follow logs: log div should be no bigger than the screen (?) if 'follow logs' is on then scroll automatically to the bottom
+        - if unchecking 'follow logs' then ignore further updates, without a refresh of the screen.
+
+        Example:
+            curl -vv --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/4c5342bf5c87/logs\?follow=true\&stdout=true\&stderr=true\&timestamps=true\&since=16691855 -H "Content-Type: application/json" --output x  
+
+    - run container (lots of options).
+        choices:
+            - accept same command line as docker run
+            - make choices available in a screen. (there are lots of options...)
+
+
+--- docker create options
+
+DONE:
+
+--  error when trying to run shell, and shell doesn't exist.
+
+    "OCI runtime exec failed: exec failed: unable to start container process: exec: "/bin/sh": stat /bin/sh: no such file or directory: unknown"
+
+    Need to copy statically compiled shell to container and run it!
+
+
+-- Show progress while pulling an image!
+    - pull image
+
+    JSON=$(echo '{"username": "string", "password": "string", "serveraddress": "string"}' | base64)
+
+    curl --unix-socket /var/run/docker.sock \
+  -H "Content-Type: application/tar"
+  -X POST "http://localhost/v1.41/images/create?fromImage=alpine"
+  -H "X-Registry-Auth"
+  -d "${JSON}"
+
+    curl -vv --unix-socket /var/run/docker.sock -H "Content-Type: application/tar" -X POST "http://localhost/v1.41/images/create?fromImage=blabla7" -H "X-Registry-Auth" -d "${JSON}"
+
+
+            curl -vvv --unix-socket /var/run/docker.sock -H "Content-Type: application/tar" -X POST "http://localhost/v1.41/images/create?fromImage=ubuntu" -H "X-Registry-Auth" -d "${JSON}"
+            Note: Unnecessary use of -X or --request, POST is already inferred.
+            *   Trying /var/run/docker.sock:0...
+            * Connected to localhost (/Users/mmoser/.docker/run/docker.sock) port 80 (#0)
+            > POST /v1.41/images/create?fromImage=ubuntu HTTP/1.1
+            > Host: localhost
+            > User-Agent: curl/7.79.1
+            > Accept: */*
+            > Content-Type: application/tar
+            > Content-Length: 96
+            >
+            * Mark bundle as not supporting multiuse
+            < HTTP/1.1 200 OK
+            < Api-Version: 1.41
+            < Content-Type: application/json
+            < Date: Mon, 21 Nov 2022 05:00:00 GMT
+            < Docker-Experimental: false
+            < Ostype: linux
+            < Server: Docker/20.10.17 (linux)
+            < Transfer-Encoding: chunked
+
+
+    https://docs.docker.com/engine/api/v1.41/#section/Authentication
+
+            sent as X-Registry-Auth header as a base64url encoded (JSON) stringA
+
+            {
+              "username": "string",
+              "password": "string",
+              "email": "string",
+              "serveraddress": "string"
+            }
+
+            The serveraddress is a domain/IP without a protocol. Throughout this structure, double quotes are required.
+
+            If you have already got an identity token from the /auth endpoint, you can just pass this instead of credentials:
+
+            {
+              "identitytoken": "9cbaf023786cd7..."
+            }
+
+
+
