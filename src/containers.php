@@ -111,7 +111,6 @@ function make_api_networks($row_val, $json) : string {
         $ret = $ret . $key . " ";
     }
 
-
     foreach($json["Ports"] as $portDef) {
        $ip = @$portDef['IP'];
        $from = @$portDef['PrivatePort'];

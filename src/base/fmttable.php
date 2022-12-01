@@ -64,7 +64,7 @@ class FmtTable {
     }
 
     private function one_json_row(string $ret, array $data, bool $is_json) : string {
-        $json_pretty = $is_json ? json_encode($data, JSON_PRETTY_PRINT) : implode("\n",$data);
+        $json_pretty = $is_json ? json_encode($data, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES) : implode("\n",$data);
         $json = "<pre>" . $json_pretty . "</pre>";
         return $ret . "<tr>" . $this->add_td("", $json) . "</tr>" . "</table>";
     }
