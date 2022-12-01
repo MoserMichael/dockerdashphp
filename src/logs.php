@@ -67,20 +67,7 @@ $cmd = $cmd . " 2>&1 | sort -k 1";
 </table>
 
 <p/>
-
-
-<?php
-if (!use_docker_api()) {
-    $runner = new base\TmpFileRunner($cmd);
-    $json = $runner->run();
-    $tbl = new base\FmtTable(array(
-        "logs" => "logs"
-    ));
-    $tbl->echo_from_generator($runner->lineGenerator());
-    exit(0);
-}
-?>
-
+    
 <script>
 
 let container_id = <?php echo "{$id}";?>;
@@ -180,17 +167,15 @@ function sendLogRequest(follow_logs, since_time_sec, until_time_sec) {
     let wsProtocol = location.protocol === 'http:' ? 'ws' : 'wss';
     let port = parseInt(location.port) + 1;
     let url = wsProtocol + '://' + location.hostname + ':' + port + '/wsconn.php';
-
-    console.log("connect to url: " + url);
     doClose();
 
     socket = new WebSocket(url);
     
     socket.addEventListener('message', (event) => {
-        console.log('Message from server ', event.data);
+        //console.log('Message from server ', event.data);
         let data = JSON.parse(event.data);
         if (data.data !== undefined) {
-            console.log("got: " + data.data);
+            //console.log("got: " + data.data);
             let log_div = document.getElementById('text_content');
             log_div.insertAdjacentHTML('beforeend', data.data);
         }
@@ -198,27 +183,9 @@ function sendLogRequest(follow_logs, since_time_sec, until_time_sec) {
 
     socket.addEventListener('open', (event) => {
         let json = JSON.stringify({'log_container_id': container_id, 'follow': follow_logs, 'since': since_time_sec, 'until': until_time_sec});
-        console.log("sending: " + json);
+        //console.log("sending: " + json);
         socket.send(json);
     });
-
-    /*
-    socket.onmessage = function (event) {
-        let data = JSON.parse(event.data);
-        if (data.data !== undefined) {
-            console.log("got: " + data.data);
-            let log_div = document.getElementById('text_content');
-            log_div.insertAdjacentHTML('beforeend', data.data);
-        }
-    }
-    socket.onopen = function (event) {
-        let json = JSON.stringify({'log_container_id': container_id, 'follow': follow_logs});
-        console.log("sending: " + json);
-        socket.send(json);
-    }
-
-     */
-
 }
 
 function clearContent() {

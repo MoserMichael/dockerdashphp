@@ -10,7 +10,3 @@ function show_hdr($idx) {
     $hdr = new base\FmtHeader($tbl);
     echo $hdr->format($idx);
 }
-
-function use_docker_api() {
-    return true ;
-}

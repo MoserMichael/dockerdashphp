@@ -23,21 +23,29 @@ require_once __DIR__ . "/../vendor/autoload.php";
 require_once __DIR__  . "/DockerRest/DockerRest.php";
 
 
-if (use_docker_api()) {
 
-    $runner = new DockerRest\DockerEngineApi();
-    list ($ok,$jsonRaw) = $runner->imageSearch($term);
+$runner = new DockerRest\DockerEngineApi();
+list ($ok,$jsonRaw) = $runner->imageSearch($term);
 
-    $tbl = new base\FmtTable(array(
-
-        "name" => "name",
-        "is_official" => "is_official",
-        "star_count" => "star_count",
-        "is_automated" => "is_automated",
-        "description" => "description"
-    ));
-
-    $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
-
-    echo $tbl->format($json);
+if (!$ok) {
+    $error = "";
+    if ($jsonRaw != "") {
+        $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
+        $error = @$json['message'] . " " . $error;
+    }
+    echo "<br/><h3>Search failed.</h3>{$error}";
+    return;
 }
+
+$tbl = new base\FmtTable(array(
+
+    "name" => "name",
+    "is_official" => "is_official",
+    "star_count" => "star_count",
+    "is_automated" => "is_automated",
+    "description" => "description"
+));
+
+$json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
+
+echo $tbl->format($json);

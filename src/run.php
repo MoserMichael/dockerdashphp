@@ -7,6 +7,8 @@
 <body>
 <?php
 require_once __DIR__ . "/hdr.php";
+require_once __DIR__ . "/../vendor/autoload.php";
+require_once __DIR__  . "/DockerRest/DockerRest.php";
 
 show_hdr(-1);
 
@@ -17,15 +19,12 @@ if ($displayName=="") {
     $displayName = $image;
 }
 
-if (!use_docker_api()) {
+$runner = new DockerRest\DockerEngineApi();
+list($ok, $containerListJsonRaw) = $runner->containersList();
+$runner->close();
+
 ?>
-<h3>Docker run command line</h3>
-<form action="/gen.php">
-    <input type="hidden" name="cmd" value="run"/>
-    docker run <input name="id" type="input" value="<?php echo $image;?>"/>
-    <p/>
-    <input type="submit" value="Run!"/>
-</form>
+
 
 <?php
 
@@ -33,14 +32,6 @@ require_once __DIR__ . "/base/runner.php";
 require_once __DIR__ . "/base/fmttable.php";
 
 
-$runner = new base\Runner("docker run --help", False);
-    $json = $runner->run();
-
-    $tbl = new base\FmtTable(array(
-        "docker run --help" => "docker run --help"
-    ));
-    echo $tbl->format_row_raw($json);
-} else {
 ?>
 <h3>Create & Run docker container with given image</h3>
 
@@ -59,201 +50,346 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         show_rows_on_checkbox(hostRows, "host_cfg");
     }
 
-    function makeRequest() {
-        /*
-        let request = {
-            "Hostname": "",
-            "Domainname": "",
-            "User": "",
-            "AttachStdin": false,
-            "AttachStdout": true,
-            "AttachStderr": true,
-            "Tty": false,
-            "OpenStdin": false,
-            "StdinOnce": false,
-            "Env": [
-                "FOO=bar",
-                "BAZ=quux"
-            ],
-            "Cmd": [
-                "date"
-            ],
-            "Entrypoint": "",
-            "Image": "ubuntu",
-            "Labels": {
-                "com.example.vendor": "Acme",
-                "com.example.license": "GPL",
-                "com.example.version": "1.0"
-            },
-            "Volumes": {
-                "/volumes/data": {}
-            },
-            "WorkingDir": "",
-            "NetworkDisabled": false,
-            "MacAddress": "12:34:56:78:9a:bc",
-            "ExposedPorts": {
-                "22/tcp": {}
-            },
-            "StopSignal": "SIGTERM",
-            "StopTimeout": 10,
-            "HostConfig": {
-                "Binds": [
-                    "/tmp:/tmp"
-                ],
-                "Links": [
-                    "redis3:redis"
-                ],
-                "Memory": 0,
-                "MemorySwap": 0,
-                "MemoryReservation": 0,
-                "KernelMemory": 0,
-                "NanoCpus": 500000,
-                "CpuPercent": 80,
-                "CpuShares": 512,
-                "CpuPeriod": 100000,
-                "CpuRealtimePeriod": 1000000,
-                "CpuRealtimeRuntime": 10000,
-                "CpuQuota": 50000,
-                "CpusetCpus": "0,1",
-                "CpusetMems": "0,1",
-                "MaximumIOps": 0,
-                "MaximumIOBps": 0,
-                "BlkioWeight": 300,
-                "BlkioWeightDevice": [
-                    {}
-                ],
-                "BlkioDeviceReadBps": [
-                    {}
-                ],
-                "BlkioDeviceReadIOps": [
-                    {}
-                ],
-                "BlkioDeviceWriteBps": [
-                    {}
-                ],
-                "BlkioDeviceWriteIOps": [
-                    {}
-                ],
-                "DeviceRequests": [
-                    {
-                        "Driver": "nvidia",
-                        "Count": -1,
-                        "DeviceIDs\"": [
-                            "0",
-                            "1",
-                            "GPU-fef8089b-4820-abfc-e83e-94318197576e"
-                        ],
-                        "Capabilities": [
-                            [
-                                "gpu",
-                                "nvidia",
-                                "compute"
-                            ]
-                        ],
-                        "Options": {
-                            "property1": "string",
-                            "property2": "string"
-                        }
+    function isLabelNameCh(ch) {
+        return /^[a-zA-Z]\.-/i.test(ch);
+    }
+
+    function isSpace(ch) {
+        return ch.trim() != "";
+    }
+
+    function isNotSpace(ch) {
+        return !isSpace(ch);
+    }
+
+    function isInCharSet(ch, charSet) {
+        return function(ch) {
+            return charSet.indexOf(ch) != -1
+        }
+    }
+
+    function skip_chars(value, offset, func) {
+        while(offset < value.length) {
+            let ch = value.charAt(offset);
+            if (!func(ch)) {
+                break;
+            }
+            offset += 1;
+         }
+         return offset;
+    }
+
+    function expect_ch(value, offset, expectedCh) {
+
+        let after_spaces = skip_chars(value, offset, isSpace);
+
+        if (after_spaces >= value.length) {
+            return -1;
+        }
+        if (value.charAt(after_spaces) == expectedCh) {
+            return after_spaces + 1;
+        }
+        return -1;
+    }
+
+    function parse_value(value, offset) {
+        let ch = value.charAt(offset);
+        let quote_char = '';
+        if (ch == "'" || ch=='"') {
+            quote_char = ch;
+            let mode = 0;
+            let next_offset = offset + 1;
+            let ret_str = "";
+            for(;next_offset < value.length; ++next_offset) {
+                ch = value.charAt(next_offset);
+                if (mode == 0) {
+                    if (ch == '\\') {
+                        mode = 1;
+                    } else if (ch == quote_char) {
+                        mode = 2;
+                        break;
+                    } else {
+                        ret_str += ch;
                     }
-                ],
-                "MemorySwappiness": 60,
-                "OomKillDisable": false,
-                "OomScoreAdj": 500,
-                "PidMode": "",
-                "PidsLimit": 0,
-                "PortBindings": {
-                    "22/tcp": [
-                        {
-                            "HostPort": "11022"
-                        }
-                    ]
-                },
-                "PublishAllPorts": false,
-                "Privileged": false,
-                "ReadonlyRootfs": false,
-                "Dns": [
-                    "8.8.8.8"
-                ],
-                "DnsOptions": [
-                    ""
-                ],
-                "DnsSearch": [
-                    ""
-                ],
-                "VolumesFrom": [
-                    "parent",
-                    "other:ro"
-                ],
-                "CapAdd": [
-                    "NET_ADMIN"
-                ],
-                "CapDrop": [
-                    "MKNOD"
-                ],
-                "GroupAdd": [
-                    "newgroup"
-                ],
-                "RestartPolicy": {
-                    "Name": "",
-                    "MaximumRetryCount": 0
-                },
-                "AutoRemove": true,
-                "NetworkMode": "bridge",
-                "Devices": [],
-                "Ulimits": [
-                    {}
-                ],
-                "LogConfig": {
-                    "Type": "json-file",
-                    "Config": {}
-                },
-                "SecurityOpt": [],
-                "StorageOpt": {},
-                "CgroupParent": "",
-                "VolumeDriver": "",
-                "ShmSize": 67108864
-            },
-            "NetworkingConfig": {
-                "EndpointsConfig": {
-                    "isolated_nw": {
-                        "IPAMConfig": {
-                            "IPv4Address": "172.20.30.33",
-                            "IPv6Address": "2001:db8:abcd::3033",
-                            "LinkLocalIPs": [
-                                "169.254.34.68",
-                                "fe80::3468"
-                            ]
-                        },
-                        "Links": [
-                            "container_1",
-                            "container_2"
-                        ],
-                        "Aliases": [
-                            "server_x",
-                            "server_y"
-                        ]
-                    }
+                } else {
+                    ret_str += ch;
+                    mode = 0;
                 }
             }
+            return [ next_offset+ 1, ret_str ];
         }
-      
-         */
+
+        let next_offset = expect_ch(value, offset, isNotSpace);
+        return [ next_offset, value.substring(offset, next_offset - offset) ];
     }
+
+    function parse_label_name_value(value, offset) {
+        let name_start = skip_chars(value, offset, isSpace);
+        if (name_start >= value.length) {
+            return null;
+        }
+
+        let name_end = skip_chars(isLabelNameCh);
+        let name = value.substring(name_start, name_end);
+
+        let after_eq = expect_ch(name_end, name_end, '=')
+        if (after_eq == null) {
+            return null;
+        }
+        let val_start = skip_chars(value, offset, isSpace);
+        if (val_start >= value.length) {
+            return null;
+        }
+
+        let val_end = parse_value(value, val_start);
+        if (val_end == null) {
+            return null;
+        }
+        value = value.substring(val_start, val_end);
+
+        return [ val_end, name, value ];
+    }
+
+    function parse_labels(value) {
+        let labels = {};
+
+        value = value.trim();
+
+        let offset = 0;
+        while(offset < value.length) {
+            let name_value_rec = parse_label_name_value(value, offset);
+            if (name_value_rec == null) {
+                break;
+            }
+            offset = name_value_rec[0];
+            labels[ name_value_rec[1] ] = name_value_rec[2];
+
+            offset = skip_chars(value, offset, isSpace);
+            offset = skip_chars(value, offset, isInCharSet(";"));
+        }
+
+        return labels;
+    }
+
+    function parse_env_vars(value) {
+        let env_vars=[];
+
+        value = value.trim();
+
+        let offset = 0;
+        while(offset < value.length) {
+            let name_value_rec = parse_label_name_value(value, offset);
+            if (name_value_rec == null) {
+                break;
+            }
+            offset = name_value_rec[0];
+            let val = name_value_rec[1] + '=' + name_value_rec[2];
+            env_vars.push(val);
+
+            offset = skip_chars(value, offset, isSpace);
+            offset = skip_chars(value, offset, isInCharSet(";"));
+        }
+        return env_vars;
+    }
+
+    function parse_cmd_line(value) {
+
+        let ret = [];
+        value = value.trim();
+
+        let offset = 0;
+        while(offset < value.length && offset != -1) {
+
+            let val_start = skip_chars(value, offset, isSpace);
+            if (val_start >= value.length) {
+                return null;
+            }
+
+            offset  = parse_value(value, val_start);
+            let cmd_opt = value.substring( val_start, offset - val_start);
+            ret.push(cmd_opt);
+        }
+
+        return ret;
+    }
+
+    function parseInt(elm_id) {
+        let str_val = document.getElementById(elm_id);
+        str_val = str_val.trim();
+
+        return str_val.toint(); //???
+    }
+
+    function makeHealthCheckSection(request) {
+        let opt = document.getElementById('health_check');
+        if (!opt.checked) {
+            return;
+        }
+
+        let cmd = document.getElementById("health_check_cmd").value;
+        let parsed_cmd_line = parse_cmd_line(cmd);
+
+
+        cmd = document.getElementById("heatth_check_type");
+        let value = cmd.options[cmd.selectedIndex].value;
+        request['HealthConfig']['Test'] = [ value, ...parsed_cmd_line ];
+
+        request['HealthConfig']['Interval'] = parseInt('healthcheck_interval');
+        request['HealthConfig']['Timeout'] = parseInt('healthcheck_timeout');
+        request['HealthConfig']['Retries'] = parseInt('healthcheck_retries');
+        request['HealthConfig']['StartPeriod'] = parseInt('healthcheck_start_period');
+
+    }
+
+    // hostPortNumber:containerPortNumber[/[udp|tcp] =>
+    // "<containerPort>/<protocolName>": [
+    //                {
+    //                    "HostIp": "",
+    //                    "HostPort": "<hostPort>"
+    //                }
+    //            ]
+    function parsePortDef(portDef) {
+        let ret = {};
+
+
+
+        return ret;
+    }
+
+    function makeHostConfiguration(request) {
+        let opt = document.getElementById('host_cfg');
+        if (!opt.checked) {
+            return;
+        }
+
+        let portDef = document.getElementById('ports').value;
+        request['HostConfig']['PortBindings'] = parsePortDef(portDef);
+    }
+
+    function makeRequest() {
+        let request = {};
+
+        request['Image'] = "<?php echo "${image}"?>";
+
+        let opt = document.getElementById('cmd_type');
+        val = document.getElementById('cmd').value;
+        let opt_val = opt.options[opt.selectedIndex].value;
+        request[opt_val] = parse_cmd_line(val);
+
+        let container_labels = document.getElementById('labels').value;
+        request['Labels'] = parse_labels(container_labels);
+
+        request['HostConfig'] = {};
+        let env_vals = document.getElementById('envvars').value;
+        request['Env'] = parse_env_vars(env_vals);
+
+        let val = document.getElementById('rm_on_exit').checked;
+        request['HostConfig']['AutoRemove'] = val;
+
+        makeHealthCheckSection(request);
+        makeHostConfiguration(request);
+
+        return request;
+    }
+
     function onRun() {
-        let requst = makeRequest();
+        let jsonRequest = makeRequest();
+
+        let xmlHttp = new XMLHttpRequest()
+
+        let container_name = document.getElementById('name').value.trim();
+        if (container_name != "") {
+            container_name = urlencode(container_name);
+        }
+
+        xmlHttp.open( "POST", "/createAndRun.php?name={container_name}", false );
+        xmlHttp.send(jsonRequest);
+
+    }
+
+    function health_check_type_changed() {
+        let sel = document.getElementById('health_check_type');
+        let edit = document.getElementById('health_check_cmd');
+        if (sel.value == "CMD" || sel.value == "CMD-SHELL") {
+            edit.disabled = false;
+        } else {
+            edit.disabled = true;
+            edit.value = '';
+        }
+    }
+    
+    function container_network_mode_changed() {
+        let sel = document.getElementById('container_network_mode');
+        let retries = document.getElementById('retries');
+        if (sel.value != "on-failure") {
+            retries.disabled = true;
+            retries.value = "";
+        } else {
+            retries.disabled = false;
+        }
+    }
+    
+    function network_mode_changed() {
+        let sel = document.getElementById('network_mode');
+        let cont_name = document.getElementById('network_mode_container_name')
+
+        while(cont_name.options.length > 0) {
+            cont_name.options.remove(0);
+        }
+
+        console.log("sel: " + sel.value);
+
+
+        if (sel.value == "container") {
+
+            cont_name.disabled = false;
+
+            // get list of container names
+            let container_list = [ <?php
+                $json = json_decode($containerListJsonRaw, JSON_OBJECT_AS_ARRAY);
+                $first = true;
+                foreach ($json as $entry) {
+                    $image = $entry['Image'];
+                    $names = $entry['Names'];
+                    $names = implode(" ", $names);
+                    if ($names == "") {
+                        $names = $image;
+                    }
+                    $names .= " - " . $image;
+                    if ($first) {
+                        $first = false;
+                    } else {
+                        echo ",";
+                    }
+                    echo "[ '{$image}', '{$names}' ]\n";
+                } ?> ];
+
+            for(let i=0; i < container_list.length; ++i) {
+                let text = container_list[i][1];
+                let value = container_list[i][0];
+
+                let c = document.createElement("option");
+                c.text = text;
+                c.value = value;
+                cont_name.options.add(c);
+            }
+        } else {
+            cont_name.disabled = true;
+        }
+        
     }
 </script>
 
 <table>
     <tr>
         <td style="width: 0">
-            <label for="image">Container Name:</label>
+            <label for="name">Container Name:</label>
         </td0">
         <td style="width: 0">
             <input name="name" id="name" size="30" type="input"/>
         </td>
         <td style="width: 0">
-            <label for="tag">Container Labels:</label>
+            <label for="labels">Container Labels:</label>
         </td>
         <td style="width: 0">
             <input name="labels" id="labels" size="30" type="input"/>
@@ -264,7 +400,10 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
     </tr>
     <tr id="row1">
         <td style="width: 0">
-            <label for="image">Command:</label>
+            <select name="cmd_type" id="cmd_type" >
+                <option value="Entrypoint">Entrypoint</option>
+                <option value="Command">Command</option>
+            </select>
         </td>
         <td style="width: 0">
             <input name="cmd" id="cmd" size="30" type="input"/>
@@ -286,18 +425,18 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             Check Type
         </td>
         <td style="width: 0">
-            <select name="heatth_check_type" id="health_check_type" >
-                <option value="none">None</option>
-                <option value="command">Command</option>
-                <option value="commandInShell">Command in default shell</option>
-                <option value="inherit">Inherit</option>
+            <select name="heatth_check_type" id="health_check_type" onchange="health_check_type_changed()" >
+                <option value="NONE">None</option>
+                <option value="CMD">Command</option>
+                <option value="CMD-SHELL">Command in default shell</option>
+                <option value="">Inherit</option>
             </select>
         </td>
         <td style="width: 0">
             Command:
         </td>
         <td style="width: 0" colspan="5">
-            <input name="health_check_cmd" id='health_check_cmd' size="30" type="input"/>
+            <input name="health_check_cmd" id='health_check_cmd' size="30" type="input" disabled="true"/>
         </td>
     </tr>
 
@@ -315,19 +454,19 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
                         Timeout
                     </td>
                     <td style="width: 0">
-                        <input name="healthcheck_timeout" id="healthcheck_interval" size="10" type="input"/>
+                        <input name="healthcheck_timeout" id="healthcheck_timeout" size="10" type="input"/>
                     </td>
                     <td style="width: 0">
                         Retries
                     </td>
                     <td style="width: 0">
-                        <input name="healthcheck_retries" id="healthcheck_interval" size="10" type="input"/>
+                        <input name="healthcheck_retries" id="healthcheck_retries" size="10" type="input"/>
                     </td>
                     <td style="width: 0">
                         Start Period
                     </td>
                     <td style="width: 0">
-                        <input name="healthcheck_start_period" id="healthcheck_interval" size="10" type="input"/>
+                        <input name="healthcheck_start_period" id="healthcheck_start_period" size="10" type="input"/>
                     </td>
                 </tr>
             </table>
@@ -357,17 +496,19 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             Network Mode:
         </td>
         <td style="width: 0">
-            <select name="network_mode" id="network_mode" >
+            <select name="network_mode" id="network_mode" onchange="network_mode_changed()" >
                 <option value="bridge">Bridge</option>
                 <option value="host">Host</option>
                 <option value="container">Container</option>
+                <option value="no-network">No Network</option>
+
             </select>
         </td>
             <td style="width: 0">
             Container
         </td>
         <td style="width: 0" colspan="5">
-            <select name="container_network_mode" id="container_network_mode" disabled="true">
+            <select name="network_mode_container_name" id="network_mode_container_name" disabled="true">
                 <option value=""></option>
             <select>
         </td>
@@ -377,7 +518,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             Restart Policy
         </td>
         <td style="width: 0">
-            <select name="container_network_mode" id="container_network_mode" >
+            <select name="container_network_mode" id="container_network_mode" onchange="container_network_mode_changed()" >
                 <option value="">None</option>
                 <option value="on-failure">Restart if process failed</option>
                 <option value="unless-stopped">Restart if not stopped by user</option>
@@ -432,6 +573,3 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
     </tr>
 </table>
 
-<?php
-}
-?>

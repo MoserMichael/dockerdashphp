@@ -10,22 +10,6 @@ require_once __DIR__ . "/hdr.php";
 
 show_hdr(2);
 
-if (!use_docker_api()) {
-?>
-
-<h3>Pulling docker image</h3>
-
-<form action="/gen.php">
-    <input type="hidden" name="cmd" value="pull"/>
-    Image: <input name="id" type="input"/>
-    <p/>
-    <input type="submit" value="Pull"/>
-</form>
-
-<hr>
-
-<?php
-} else {
 ?>
 
 <h3>Pulling docker image</h3>
@@ -266,9 +250,6 @@ function on_select_auth() {
 }
 </script>
     
-<?php
-}
-?>
 <h3>Search for docker image</h3>
 <form action="/searchres.php">
     <input type="hidden" name="cmd" value="search"/>

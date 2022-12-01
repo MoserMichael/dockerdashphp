@@ -20,16 +20,6 @@ require_once __DIR__ . "/base/fmttable.php";
 require_once __DIR__ . "/../vendor/autoload.php";
 require_once __DIR__  . "/DockerRest/DockerRest.php";
 
-function make_docker_inspect_link($row_val,$json) : string {
-
-    $image = $json["ID"];
-
-    $rmi="<a href='/gen.php?cmd=rmi&id={$row_val}'>/remove image/</a>";
-    $run="<a href='/run.php?ID={$image}'>/create & run/</a>";
-
-    return "<a title='inspect' href='/gen.php?cmd=inspecti&id={$row_val}'>{$row_val}</a>&nbsp;{$rmi}&nbsp;{$run}";
-}
-
 
 function make_api_id($row_val,$json) : string {
     $id = $json["Id"];
@@ -73,40 +63,20 @@ function make_api_labels($row, $json) : string
 }
 
 
-if (!use_docker_api()) {
+$runner = new DockerRest\DockerEngineApi();
+list ($ok,$jsonRaw) = $runner->imageList();
 
-    $runner = new base\Runner("docker image ls -a --format='{{json .}}'");
-    $json = $runner->run();
-    $tbl = new base\FmtTable(array(
-        "ID" => array("ID", __NAMESPACE__ . "\\make_docker_inspect_link"),
-        "Repository" => "Repository",
-        "Tag" => "Tag",
-        "RepoDigest" => "Digest",
-        "Containers" => "Containers",
-        "Created Since" => "CreatedSince",
-        "Size" => "Size",
-        "Shared Size" => "SharedSize",
-        "Unique Size" => "UniqueSize",
-        "Virtual Size" => "VirtualSize"
-    ));
+$tbl = new base\FmtTable(array(
+    "Id" => array("ID", __NAMESPACE__ . "\\make_api_id"),
+    "RepoDigests" => array("Repository", __NAMESPACE__ . "\\make_api_repo_name"),
+    "Labels" => array("Labels",  __NAMESPACE__ . "\\make_api_labels"),
+    "Created" => array("CreatedSince", __NAMESPACE__ . "\\make_api_created"),
+    "Size" => "Size",
+    "Shared Size" => "SharedSize",
+    "Virtual Size" => "VirtualSize"
+));
 
-    echo $tbl->format($json);
-} else {
+$json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
 
-    $runner = new DockerRest\DockerEngineApi();
-    list ($ok,$jsonRaw) = $runner->imageList();
+echo $tbl->format($json);
 
-    $tbl = new base\FmtTable(array(
-        "Id" => array("ID", __NAMESPACE__ . "\\make_api_id"),
-        "RepoDigests" => array("Repository", __NAMESPACE__ . "\\make_api_repo_name"),
-        "Labels" => array("Labels",  __NAMESPACE__ . "\\make_api_labels"),
-        "Created" => array("CreatedSince", __NAMESPACE__ . "\\make_api_created"),
-        "Size" => "Size",
-        "Shared Size" => "SharedSize",
-        "Virtual Size" => "VirtualSize"
-    ));
-
-    $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
-
-    echo $tbl->format($json);
-}

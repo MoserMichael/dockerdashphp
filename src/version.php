@@ -21,14 +21,9 @@ require_once __DIR__ . "/../vendor/autoload.php";
 require_once __DIR__  . "/DockerRest/DockerRest.php";
 
 $json=null;
-if (!use_docker_api()) {
-    $runner = new base\Runner("docker version", False);
-    $json = $runner->run();
-} else {
-    $runner = new DockerRest\DockerEngineApi();
-    list ($ok, $jsonRaw) = $runner->dockerVersion();
-    $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
-}
+$runner = new DockerRest\DockerEngineApi();
+list ($ok, $jsonRaw) = $runner->dockerVersion();
+$json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
 
 $tbl = new base\FmtTable(array(
     "Docker Version" => "Docker Version",
@@ -37,21 +32,17 @@ echo $tbl->format_row($json);
 ?>
 
 
-<?php
-if (!use_docker_api()) {
 
-    echo "<h3>Disk Usage</h3>";
-    echo "Command: <code>docker system df</code>";
+echo "<h3>Disk Usage</h3>";
+echo "Command: <code>docker system df</code>";
 
-    $runner = new base\Runner("docker system df", False);
-    $json = $runner->run();
+$runner = new base\Runner("docker system df", False);
+$json = $runner->run();
 
-    $tbl = new base\FmtTable(array(
-        "Docker Disk Usage" => "Docker Disk Usage",
-    ));
-    echo $tbl->format_row($json);
-}
-?>
+$tbl = new base\FmtTable(array(
+    "Docker Disk Usage" => "Docker Disk Usage",
+));
+echo $tbl->format_row($json);
 
 
 <h3>Engine info</h3>
@@ -59,15 +50,9 @@ Command: <code>docker info</code>
 
 <?php
 
-if (!use_docker_api()) {
-    $runner = new base\Runner("docker info --format='{{json .}}'");
-    $json = $runner->run();
-} else {
-    $runner = new DockerRest\DockerEngineApi();
-    list($ok, $jsonRaw) = $runner->dockerInfo();
-    $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
-}
-
+$runner = new DockerRest\DockerEngineApi();
+list($ok, $jsonRaw) = $runner->dockerInfo();
+$json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
 
 $tbl = new base\FmtTable(array(
     "Docker Info" => "Docker Info",

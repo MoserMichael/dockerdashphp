@@ -111,6 +111,7 @@ function make_api_networks($row_val, $json) : string {
         $ret = $ret . $key . " ";
     }
 
+
     foreach($json["Ports"] as $portDef) {
        $ip = @$portDef['IP'];
        $from = @$portDef['PrivatePort'];
@@ -139,60 +140,37 @@ function make_api_image($row_val, $json) : string {
     return $link;
 }
 
-if (!use_docker_api()) {
 
-    $runner = new base\Runner("docker ps -a --format='{{json .}}'");
-    $json = $runner->run();
-    $tbl = new base\FmtTable(array(
-        "ID" => array("ID", __NAMESPACE__ . "\\make_docker_inspect_link"),
-        "State" => array("State", __NAMESPACE__ . "\\make_docker_state_link"),
-        "Names" => "Names",
-        "Image" => "Image",
-        "Status" => "Status",
-        "Created At" => "CreatedAt",
-        "Running For" => "RunningFor",
-        "Command" => "Command",
-        "Local Volumes" => "LocalVolumes",
-        "Mounted Volumes" => "Mounts",
-        "Disk Size" => "Size",
-        "Attached Networks" => "Networks",
-        "Exposed Ports" => "Ports",
-        "Labels" => "Labels",
-    ));
 
-    echo $tbl->format($json);
-} else {
+$runner = new DockerRest\DockerEngineApi();
+list($ok, $jsonRaw) = $runner->containersList();
 
-    $runner = new DockerRest\DockerEngineApi();
-    list($ok, $jsonRaw) = $runner->containersList();
-
-    $tbl = new base\FmtTable(array(
-        "Id" => array("ID", __NAMESPACE__ . "\\make_api_id"),
-        "State" => array("State", __NAMESPACE__ . "\\make_api_status" ),
-        "Names" => array("Names", __NAMESPACE__ . "\\make_api_names" ),
-        "Created" => array("Created At", __NAMESPACE__ . "\\make_api_created_at"),
-        "Image" => array("Image", "make_api_image"),
-        "Command" => "Command",
-        "NetworkSettings" => array("NetworkSettings", __NAMESPACE__ . "\\make_api_networks"),
-        "RootFs Size" => "SizeRootFs",
-        "Mounts" => array("Mounts",  __NAMESPACE__ . "\\make_api_mounts"),
-        /*
-        "ID" => array("ID", __NAMESPACE__ . "\\make_docker_inspect_link"),
-        "State" => array("State", __NAMESPACE__ . "\\make_docker_state_link"),
-        "Names" => "Names",
-        "Image" => "Image",
-        "Status" => "Status",
-        "Created At" => "CreatedAt",
-        "Running For" => "RunningFor",
-        "Command" => "Command",
-        "Local Volumes" => "LocalVolumes",
-        "Mounted Volumes" => "Mounts",
-        "Disk Size" => "Size",
-        "Attached Networks" => "Networks",
-        "Exposed Ports" => "Ports",
-        "Labels" => "Labels",
-        */
-    ));
-    $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
-    echo $tbl->format($json);
-}
+$tbl = new base\FmtTable(array(
+    "Id" => array("ID", __NAMESPACE__ . "\\make_api_id"),
+    "State" => array("State", __NAMESPACE__ . "\\make_api_status" ),
+    "Names" => array("Names", __NAMESPACE__ . "\\make_api_names" ),
+    "Created" => array("Created At", __NAMESPACE__ . "\\make_api_created_at"),
+    "Image" => array("Image", "make_api_image"),
+    "Command" => "Command",
+    "NetworkSettings" => array("NetworkSettings", __NAMESPACE__ . "\\make_api_networks"),
+    "RootFs Size" => "SizeRootFs",
+    "Mounts" => array("Mounts",  __NAMESPACE__ . "\\make_api_mounts"),
+    /*
+    "ID" => array("ID", __NAMESPACE__ . "\\make_docker_inspect_link"),
+    "State" => array("State", __NAMESPACE__ . "\\make_docker_state_link"),
+    "Names" => "Names",
+    "Image" => "Image",
+    "Status" => "Status",
+    "Created At" => "CreatedAt",
+    "Running For" => "RunningFor",
+    "Command" => "Command",
+    "Local Volumes" => "LocalVolumes",
+    "Mounted Volumes" => "Mounts",
+    "Disk Size" => "Size",
+    "Attached Networks" => "Networks",
+    "Exposed Ports" => "Ports",
+    "Labels" => "Labels",
+    */
+));
+$json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
+echo $tbl->format($json);

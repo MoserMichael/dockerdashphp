@@ -223,12 +223,7 @@ list($command, $tbl_title, $page_title, $is_json, $func_name) = $cmd_def[$cmd];
 
 $cmd_str = sprintf($command, escapeshellarg($id));
 
-if (use_docker_api()) {
-    $json = call_user_func($func_name,$id);
-} else {
-    $runner = new base\Runner($cmd_str, $is_json);
-    $json = $runner->run();
-}
+$json = call_user_func($func_name,$id);
 ?>
 
 <h3><?php echo $page_title; ?></h3>
