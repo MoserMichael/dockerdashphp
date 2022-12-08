@@ -65,7 +65,13 @@ while getopts "hvrs:p:c:" opt; do
    esac
 done
 
+function check_docker_engine_running() {
+    # TODO
+}
+
 if [[ $ACTION == 'start' ]]; then
+
+    check_docker_engine_running()
  
     D="$(docker version --format='{{json .Client.APIVersion}}')"
  

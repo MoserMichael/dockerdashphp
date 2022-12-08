@@ -11,3 +11,4 @@ function show_rows_on_checkbox(rows, checkbox_id) {
     let on = document.getElementById(checkbox_id).checked;
     show_rows(rows, on);
 }
+

@@ -13,6 +13,9 @@ run:
 runphp:
 	NUM_WORKERS=10 php -S "0.0.0.0:8001" -t src
 
+runhttptest:
+	php -S "0.0.0.0:8003"
+
 update: composer.json
 	composer update
 

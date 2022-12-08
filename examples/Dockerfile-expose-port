@@ -1,0 +1,9 @@
+FROM alpine:latest
+
+EXPOSE 10000
+EXPOSE 10001/udp
+
+ENTRYPOINT [ "/bin/sleep", "infinity" ]
+
+
+

@@ -26,19 +26,14 @@ $runner->close();
 ?>
 
 
-<?php
-
-require_once __DIR__ . "/base/runner.php";
-require_once __DIR__ . "/base/fmttable.php";
-
-
-?>
 <h3>Create & Run docker container with given image</h3>
 
 Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=inspecti&id={$image}'>{$displayName}</a>"; ?> will be run in detached mode
 </p>
 
 <script  src="/static-files/utils.js"></script>
+<script  src="/static-files/prs.js"></script>
+<script  src="/contprs.js"></script>
 
 <script>
     function onHealthCheck() {
@@ -50,174 +45,96 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         show_rows_on_checkbox(hostRows, "host_cfg");
     }
 
-    function isLabelNameCh(ch) {
-        return /^[a-zA-Z]\.-/i.test(ch);
-    }
 
-    function isSpace(ch) {
-        return ch.trim() != "";
-    }
-
-    function isNotSpace(ch) {
-        return !isSpace(ch);
-    }
-
-    function isInCharSet(ch, charSet) {
-        return function(ch) {
-            return charSet.indexOf(ch) != -1
-        }
-    }
-
-    function skip_chars(value, offset, func) {
-        while(offset < value.length) {
-            let ch = value.charAt(offset);
-            if (!func(ch)) {
-                break;
-            }
-            offset += 1;
-         }
-         return offset;
-    }
-
-    function expect_ch(value, offset, expectedCh) {
-
-        let after_spaces = skip_chars(value, offset, isSpace);
-
-        if (after_spaces >= value.length) {
-            return -1;
-        }
-        if (value.charAt(after_spaces) == expectedCh) {
-            return after_spaces + 1;
-        }
-        return -1;
-    }
-
-    function parse_value(value, offset) {
-        let ch = value.charAt(offset);
-        let quote_char = '';
-        if (ch == "'" || ch=='"') {
-            quote_char = ch;
-            let mode = 0;
-            let next_offset = offset + 1;
-            let ret_str = "";
-            for(;next_offset < value.length; ++next_offset) {
-                ch = value.charAt(next_offset);
-                if (mode == 0) {
-                    if (ch == '\\') {
-                        mode = 1;
-                    } else if (ch == quote_char) {
-                        mode = 2;
-                        break;
-                    } else {
-                        ret_str += ch;
-                    }
-                } else {
-                    ret_str += ch;
-                    mode = 0;
-                }
-            }
-            return [ next_offset+ 1, ret_str ];
-        }
-
-        let next_offset = expect_ch(value, offset, isNotSpace);
-        return [ next_offset, value.substring(offset, next_offset - offset) ];
-    }
-
-    function parse_label_name_value(value, offset) {
-        let name_start = skip_chars(value, offset, isSpace);
-        if (name_start >= value.length) {
-            return null;
-        }
-
-        let name_end = skip_chars(isLabelNameCh);
-        let name = value.substring(name_start, name_end);
-
-        let after_eq = expect_ch(name_end, name_end, '=')
-        if (after_eq == null) {
-            return null;
-        }
-        let val_start = skip_chars(value, offset, isSpace);
-        if (val_start >= value.length) {
-            return null;
-        }
-
-        let val_end = parse_value(value, val_start);
-        if (val_end == null) {
-            return null;
-        }
-        value = value.substring(val_start, val_end);
-
-        return [ val_end, name, value ];
+    function parse_cmd_line(value) {
+        let seq = makeRepetitionParser(
+            value_parser, 0
+        )
+        return runParser(value, seq,  "Command line");
     }
 
     function parse_labels(value) {
         let labels = {};
 
-        value = value.trim();
-
-        let offset = 0;
-        while(offset < value.length) {
-            let name_value_rec = parse_label_name_value(value, offset);
-            if (name_value_rec == null) {
-                break;
-            }
-            offset = name_value_rec[0];
-            labels[ name_value_rec[1] ] = name_value_rec[2];
-
-            offset = skip_chars(value, offset, isSpace);
-            offset = skip_chars(value, offset, isInCharSet(";"));
+        if (value.trim() == "") {
+            return labels;
         }
 
+        let res = runParser(value, makeLabelNameParser(),  "Container labels");
+
+        let i=0;
+        for(;i<res.length;++i) {
+            labels[res[0]] = res[2];
+        }
         return labels;
     }
 
     function parse_env_vars(value) {
+
+        if (value.trim() == "") {
+            return [];
+        }
+
         let env_vars=[];
 
-        value = value.trim();
+        let res = runParser(value, makeEnvVarsParer(), "Environment Variables");
 
-        let offset = 0;
-        while(offset < value.length) {
-            let name_value_rec = parse_label_name_value(value, offset);
-            if (name_value_rec == null) {
-                break;
-            }
-            offset = name_value_rec[0];
-            let val = name_value_rec[1] + '=' + name_value_rec[2];
+        let add_value = function(name_value_res) {
+            let val = name_value_res[0] + "=" + name_value_res[2];
             env_vars.push(val);
-
-            offset = skip_chars(value, offset, isSpace);
-            offset = skip_chars(value, offset, isInCharSet(";"));
         }
+
+        add_value(res[0]);
+
+        let i = 0;
+        let values = res[1];
+        for(;i<values.length;++i) {
+            add_value(values[i]);
+        }
+
         return env_vars;
     }
 
-    function parse_cmd_line(value) {
+    function parseMemSize(elm_id) {
+        let val = document.getElementById(elm_id).value;
 
-        let ret = [];
-        value = value.trim();
-
-        let offset = 0;
-        while(offset < value.length && offset != -1) {
-
-            let val_start = skip_chars(value, offset, isSpace);
-            if (val_start >= value.length) {
-                return null;
-            }
-
-            offset  = parse_value(value, val_start);
-            let cmd_opt = value.substring( val_start, offset - val_start);
-            ret.push(cmd_opt);
+        if (val.trim() == "") {
+            return 0;
         }
 
-        return ret;
+        let res = runParser(val, makeMemSizeParser(),  "Memory size limit");
+
+        let num = parseInt(res[0],10);
+
+        if (res[1] == 'k' || res[1] == 'K') {
+            num *= 1024;
+        }
+        if (res[1] == 'M' || res[1] == 'M') {
+            num *= 1024 * 1024;
+        }
+        if (res[1] == 'k' || res[1] == 'K') {
+            num *= 1024 * 1024 * 1024;
+        }
+
+        return num;
     }
 
-    function parseInt(elm_id) {
-        let str_val = document.getElementById(elm_id);
-        str_val = str_val.trim();
 
-        return str_val.toint(); //???
+    function parsePortDef(portDef) {
+        let ret = {};
+        let res = runParser(portDef, makePortDefParser(),  "Port mappings");
+        let i = 0;
+        for(i=0; i< res.length; ++i) {
+            let proto = "/tcp";
+            if (res[3].length != 0) {
+                proto = res[3][0];
+            }
+            ret[ res[2] + proto ] = {
+                "HostIp": "",
+                "HostPort": '"' + res[0] + '"'
+            }
+        }
+        return ret;
     }
 
     function makeHealthCheckSection(request) {
@@ -234,26 +151,10 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         let value = cmd.options[cmd.selectedIndex].value;
         request['HealthConfig']['Test'] = [ value, ...parsed_cmd_line ];
 
-        request['HealthConfig']['Interval'] = parseInt('healthcheck_interval');
-        request['HealthConfig']['Timeout'] = parseInt('healthcheck_timeout');
-        request['HealthConfig']['Retries'] = parseInt('healthcheck_retries');
-        request['HealthConfig']['StartPeriod'] = parseInt('healthcheck_start_period');
-
-    }
-
-    // hostPortNumber:containerPortNumber[/[udp|tcp] =>
-    // "<containerPort>/<protocolName>": [
-    //                {
-    //                    "HostIp": "",
-    //                    "HostPort": "<hostPort>"
-    //                }
-    //            ]
-    function parsePortDef(portDef) {
-        let ret = {};
-
-
-
-        return ret;
+        request['HealthConfig']['Interval'] = parseMemSize('healthcheck_interval');
+        request['HealthConfig']['Timeout'] = parseMemSize('healthcheck_timeout');
+        request['HealthConfig']['Retries'] = parseMemSize('healthcheck_retries');
+        request['HealthConfig']['StartPeriod'] = parseMemSize('healthcheck_start_period');
     }
 
     function makeHostConfiguration(request) {
@@ -272,9 +173,8 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         request['Image'] = "<?php echo "${image}"?>";
 
         let opt = document.getElementById('cmd_type');
-        val = document.getElementById('cmd').value;
         let opt_val = opt.options[opt.selectedIndex].value;
-        request[opt_val] = parse_cmd_line(val);
+        request[opt_val] = parse_cmd_line(document.getElementById('cmd').value);
 
         let container_labels = document.getElementById('labels').value;
         request['Labels'] = parse_labels(container_labels);
@@ -295,6 +195,11 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
     function onRun() {
         let jsonRequest = makeRequest();
 
+        let json_pretty = JSON.stringify(jsonRequest, null, 4)
+        console.log(json_pretty);
+        return
+
+        /*
         let xmlHttp = new XMLHttpRequest()
 
         let container_name = document.getElementById('name').value.trim();
@@ -302,9 +207,10 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             container_name = urlencode(container_name);
         }
 
+
         xmlHttp.open( "POST", "/createAndRun.php?name={container_name}", false );
         xmlHttp.send(jsonRequest);
-
+        */
     }
 
     function health_check_type_changed() {
@@ -317,7 +223,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             edit.value = '';
         }
     }
-    
+
     function container_network_mode_changed() {
         let sel = document.getElementById('container_network_mode');
         let retries = document.getElementById('retries');
@@ -328,7 +234,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             retries.disabled = false;
         }
     }
-    
+
     function network_mode_changed() {
         let sel = document.getElementById('network_mode');
         let cont_name = document.getElementById('network_mode_container_name')
@@ -338,7 +244,6 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         }
 
         console.log("sel: " + sel.value);
-
 
         if (sel.value == "container") {
 
@@ -376,7 +281,6 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         } else {
             cont_name.disabled = true;
         }
-        
     }
 </script>
 
@@ -401,8 +305,8 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
     <tr id="row1">
         <td style="width: 0">
             <select name="cmd_type" id="cmd_type" >
-                <option value="Entrypoint">Entrypoint</option>
                 <option value="Command">Command</option>
+                <option value="Entrypoint">Entrypoint</option>
             </select>
         </td>
         <td style="width: 0">
@@ -501,7 +405,6 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
                 <option value="host">Host</option>
                 <option value="container">Container</option>
                 <option value="no-network">No Network</option>
-
             </select>
         </td>
             <td style="width: 0">
@@ -556,7 +459,6 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
                 </td>
             </tr>
         </table>
-
         </td>
 
         <!--
