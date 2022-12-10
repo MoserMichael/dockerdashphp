@@ -192,7 +192,6 @@ const makeTokenParser = function (token) {
 
 function requireFunction(f) {
     if (!(f instanceof Function)) {
-        alert(typeof f);
         throw new Error("argument is not a function");
     }
 }
