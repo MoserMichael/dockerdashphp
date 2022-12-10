@@ -1,58 +1,96 @@
 
 let value_parser = makeAlternativeParser([
-    makeRegexParser(/^'(\\\\.|[^'])*'/, "string-const" ),
-    makeRegexParser(/^"(\\\\.|[^"])*"/, "string-const" ),
-
-    makeTransformer(
-        makeRegexParser(/[^\;]*/, "safe-token"),
-        function(res) {
-            return escape(res); // what do you do instead of escape?
-        }
-    ),
+    makeRegexParser(/^'(\\.|[^'])*'/, "string-const" ),
+    makeRegexParser(/^"(\\.|[^"])*"/, "string-const" ),
+    makeRegexParser(/^(\\.|[^\ \;\&\#\|\<\>\`\$\*\(\)\'\"\{\}])*/, "safe-token"), // don't accept unsafe chars: https://www.oreilly.com/library/view/learning-the-bash/1565923472/ch01s09.html
 ]);
 
 function makeLabelNameParser() {
+    // see https://docs.docker.com/config/labels-custom-metadata/
     return makeRepetitionParser(
         makeSequenceParser([
-            makeRegexParser(/^[a-zA-Z0-9]\.-/),
+            makeRegexParser(/^[a-zA-Z0-9\.\-]+/, "label"),
             makeTokenParser("="),
-            value_parser
+            makeTransformer(
+                value_parser,
+                function(arg) {
+                    return JSON.stringify((arg));
+                }
+            )
         ]),
     );
 }
 
+function makeCmdLineParer() {
+    return makeRepetitionParser(
+        value_parser, 0);
+}
+
 function makeEnvVarsParer() {
     let name_value_parser = makeSequenceParser([
-        makeRegexParser(/^[a-zA-Z][a-zA-Z0-9]*/), // \.\-\_
+        makeRegexParser(/^[a-zA-Z][a-zA-Z0-9\_]*/),
         makeTokenParser("="),
         value_parser
     ]);
 
-    return makeSequenceParser([
-        name_value_parser,
-        makeRepetitionParser(
-            makeSequenceParser([
-                makeTokenParser(";"),
-                name_value_parser
-            ]),
-            0
-        )]);
+    return makeSequenceParser(
+        [
+            makeTransformer(
+                name_value_parser,
+                function(state) {
+                    return [state];
+                }
+            ),
+            makeRepetitionParser(
+                makeTransformer(
+                    makeSequenceParser([
+                        makeTokenParser(";"),
+                        name_value_parser
+                    ]),
+                    function(state) {
+                        return state[1];
+                    }
+                ),
+                0,
+                -1,
+            )
+        ], "environment variables", true);
 }
 
 function makePortDefParser() {
     return  makeRepetitionParser(
         makeSequenceParser([
-            makeRegexParser(/\d+/),
+            makeRegexParser(/^\d+/,"host port"),
             makeTokenParser(":"),
-            makeRegexParser(/\d+/),
-            makeOptParser(
-                makeAlternativeParser([
-                    makeTokenParser("/udp"),
-                    makeTokenParser("/tcp"),
-                ] )
-            )
+            makeRegexParser(/^\d+/, "container port"),
+            makeTransformer(
+                makeOptParser(
+                    makeAlternativeParser([
+                        makeTokenParser("/udp"),
+                        makeTokenParser("/tcp")
+                    ], "protocol definition" )
+                ),
+                function(res) {
+                    if (res.length == 0) {
+                        return [ "/tcp" ];
+                    }
+                    return res;
+                })
         ])
     );
+}
+
+function makeVolumeMappingParser() {
+
+    let path_parser = makeRegexParser(/^(\\[^;$`*?]|[^\ \;\&\#\|\<\>\`\$\*\(\)\'\"\{\}\?])+/);
+    return makeRepetitionParser(
+        makeSequenceParser([
+            path_parser,
+            makeTokenParser("="),
+            path_parser
+        ], "volume mapping")
+    ,0, -1, "volume mappigns");    
+        
 }
 
 function makeMemSizeParser() {
@@ -64,6 +102,10 @@ function makeMemSizeParser() {
 }
 
 function runParser(txt, prs, label, show_alert=true) {
+
+    //setTrace(true);
+    //console.log("parsing: " + txt);
+
     let s = new State(0, txt);
 
     let parser = makeConsumeAll(prs);
@@ -71,9 +113,11 @@ function runParser(txt, prs, label, show_alert=true) {
         let result = parser(s);
         console.log("parsing succeeded!")
         console.log(result.show());
-        return result.data;
-    } catch(er) {
-        let msg = "Error in " + label + "\n" + formatParserError(er, txt);
+        return result.result;
+    } catch(ex) {
+        console.log(ex.stack);
+        let errmsg = formatParserError(ex, txt);
+        let msg = "Error in " + label + "\n" + errmsg;
         if (show_alert) {
             alert(msg);
         } else {

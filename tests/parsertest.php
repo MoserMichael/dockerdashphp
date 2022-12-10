@@ -14,6 +14,20 @@ function testAll() {
     let envPars = makeEnvVarsParer();
     let res = runParser("PATH=/lib:/usr/lib;SHELL=/bin/sh;LABEL='very nice string'", envPars, false);
     console.log(res);
+
+    let labelPars = makeLabelNameParser();
+    res = runParser("DESCR=anicelabel LB=another\\ withspace", labelPars, false);
+    console.log(res);
+
+    let portDefPars = makePortDefParser();
+    res = runParser("8080:8001 9000:9001/udp", portDefPars, false);
+    console.log(res);
+
+    let cmdLinePars = makeCmdLineParer();
+    res = runParser("/bin/sleep infinity 'blabla'", cmdLinePars, false);
+    console.log(res);
+
+
 }
 testAll();
 

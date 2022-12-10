@@ -74,11 +74,11 @@ class DockerEngineApi extends HttpHandler {
         return $this->sendCommonRequest($url, $body, 200, self::MethodPut, $hdr);
     }
 
-    public function containerCreate(string $id, string $body)
+    public function containerCreate(array $body)
     {
         $ver = self::$dockerApiVersion;
-        $url = "/{$ver}/containers/{$id}/create";
-        return $this->sendCommonRequest($url, $body, 204, self::MethodPost);
+        $url = "/{$ver}/containers/create";
+        return $this->sendCommonRequest($url, $body, 201, self::MethodPost);
     }
 
     public function containerStart(string $id)

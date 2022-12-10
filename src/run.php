@@ -36,6 +36,9 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
 <script  src="/contprs.js"></script>
 
 <script>
+
+    let image_id="<?php echo "{$image}"?>";
+
     function onHealthCheck() {
         let hostRows = [ "healthRow1", "healthRow2"] ;
         show_rows_on_checkbox(hostRows, "health_check");
@@ -47,10 +50,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
 
 
     function parse_cmd_line(value) {
-        let seq = makeRepetitionParser(
-            value_parser, 0
-        )
-        return runParser(value, seq,  "Command line");
+        return runParser(value, makeCmdLineParer(),  "Command line");
     }
 
     function parse_labels(value) {
@@ -84,12 +84,10 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             env_vars.push(val);
         }
 
-        add_value(res[0]);
-
         let i = 0;
-        let values = res[1];
-        for(;i<values.length;++i) {
-            add_value(values[i]);
+
+        for(;i<res.length;++i) {
+            add_value(res[i]);
         }
 
         return env_vars;
@@ -112,7 +110,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         if (res[1] == 'M' || res[1] == 'M') {
             num *= 1024 * 1024;
         }
-        if (res[1] == 'k' || res[1] == 'K') {
+        if (res[1] == 'g' || res[1] == 'G') {
             num *= 1024 * 1024 * 1024;
         }
 
@@ -125,13 +123,14 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         let res = runParser(portDef, makePortDefParser(),  "Port mappings");
         let i = 0;
         for(i=0; i< res.length; ++i) {
-            let proto = "/tcp";
-            if (res[3].length != 0) {
-                proto = res[3][0];
-            }
-            ret[ res[2] + proto ] = {
+            let def = res[i];
+            let hostPort = def[0];
+            let containerPort = def[2];
+            let proto = def[3];
+
+            ret[ containerPort + proto ] = {
                 "HostIp": "",
-                "HostPort": '"' + res[0] + '"'
+                "HostPort": '"' + hostPort + '"'
             }
         }
         return ret;
@@ -143,6 +142,8 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             return;
         }
 
+        request['HealthConfig'] = {};
+
         let cmd = document.getElementById("health_check_cmd").value;
         let parsed_cmd_line = parse_cmd_line(cmd);
 
@@ -150,11 +151,17 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         cmd = document.getElementById("heatth_check_type");
         let value = cmd.options[cmd.selectedIndex].value;
         request['HealthConfig']['Test'] = [ value, ...parsed_cmd_line ];
-
         request['HealthConfig']['Interval'] = parseMemSize('healthcheck_interval');
         request['HealthConfig']['Timeout'] = parseMemSize('healthcheck_timeout');
         request['HealthConfig']['Retries'] = parseMemSize('healthcheck_retries');
         request['HealthConfig']['StartPeriod'] = parseMemSize('healthcheck_start_period');
+    }
+
+    function makeVolumeMapping() {
+        let parser = makeVolumeMappingParser();
+        let text = document.getElementById('');
+        runParser(text, makePortDefParser(), "Mounted Volumes");
+        return text.trim().split(' ');
     }
 
     function makeHostConfiguration(request) {
@@ -165,6 +172,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
 
         let portDef = document.getElementById('ports').value;
         request['HostConfig']['PortBindings'] = parsePortDef(portDef);
+        request['HostConfig']['Binds'] = makeVolumeMapping();
     }
 
     function makeRequest() {
@@ -174,14 +182,24 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
 
         let opt = document.getElementById('cmd_type');
         let opt_val = opt.options[opt.selectedIndex].value;
-        request[opt_val] = parse_cmd_line(document.getElementById('cmd').value);
+        let cmd_val = parse_cmd_line(document.getElementById('cmd').value);
+        if (cmd_val.length != 0) {
+            request["Cmd"] = cmd_val;
+        }
 
         let container_labels = document.getElementById('labels').value;
-        request['Labels'] = parse_labels(container_labels);
+        let label_vals = parse_labels(container_labels);
+        if (Object.keys(label_vals).length != 0) {
+            request['Labels'] = label_vals;
+        }
 
         request['HostConfig'] = {};
+
         let env_vals = document.getElementById('envvars').value;
-        request['Env'] = parse_env_vars(env_vals);
+        let env_val = parse_env_vars(env_vals);
+        if (env_val.length != 0) {
+            request['Env'] = env_val;
+        }
 
         let val = document.getElementById('rm_on_exit').checked;
         request['HostConfig']['AutoRemove'] = val;
@@ -197,9 +215,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
 
         let json_pretty = JSON.stringify(jsonRequest, null, 4)
         console.log(json_pretty);
-        return
 
-        /*
         let xmlHttp = new XMLHttpRequest()
 
         let container_name = document.getElementById('name').value.trim();
@@ -207,10 +223,9 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             container_name = urlencode(container_name);
         }
 
-
-        xmlHttp.open( "POST", "/createAndRun.php?name={container_name}", false );
-        xmlHttp.send(jsonRequest);
-        */
+        console.log("sending...");
+        xmlHttp.open( "POST", "/createAndRun.php?id=" + image_id , false );
+        xmlHttp.send(json_pretty);
     }
 
     function health_check_type_changed() {
