@@ -1,9 +1,7 @@
 <?php require_once __DIR__ . "/base/nocache.php"; ?>
 <html xmlns="http://www.w3.org/1999/html">
-<?php include( __DIR__ . "/static-files/css.css"); ?>
-<script>
-    <?php include( __DIR__ . "/static-files/sorttable/sort-table.min.js"); ?>
-</script>
+
+
 <body>
 <?php
 require_once __DIR__ . "/hdr.php";
@@ -184,7 +182,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         let opt_val = opt.options[opt.selectedIndex].value;
         let cmd_val = parse_cmd_line(document.getElementById('cmd').value);
         if (cmd_val.length != 0) {
-            request["Cmd"] = cmd_val;
+            request[opt_val] = cmd_val;
         }
 
         let container_labels = document.getElementById('labels').value;

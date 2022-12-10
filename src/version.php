@@ -31,20 +31,6 @@ $tbl = new base\FmtTable(array(
 echo $tbl->format_row($json);
 ?>
 
-
-
-echo "<h3>Disk Usage</h3>";
-echo "Command: <code>docker system df</code>";
-
-$runner = new base\Runner("docker system df", False);
-$json = $runner->run();
-
-$tbl = new base\FmtTable(array(
-    "Docker Disk Usage" => "Docker Disk Usage",
-));
-echo $tbl->format_row($json);
-
-
 <h3>Engine info</h3>
 Command: <code>docker info</code>
 

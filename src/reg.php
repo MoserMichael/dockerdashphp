@@ -1,9 +1,5 @@
 <?php require_once __DIR__ . "/base/nocache.php"; ?>
 <html>
-<?php include( __DIR__ . "/static-files/css.css"); ?>
-<script>
-    <?php include( __DIR__ . "/static-files/sorttable/sort-table.min.js"); ?>
-</script>
 <body>
 <?php
 require_once __DIR__ . "/hdr.php";
