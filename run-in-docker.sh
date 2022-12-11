@@ -16,12 +16,12 @@ Stop docker-web in docker
 
 Run docker-web web server in a docker; by default the docker image is fetched from a public repository. ($IMAGE_LOCATION)
 
-Start the web server for s9k
+Start the web server
 
 -r          - start the web server
--p  <port>  - listening port (default ${PORT})
+-p  <port>  - listening base port (default ${PORT} - and the next one: ${NEXT_PORT})
 
-Stop the web server for s9k
+Stop the web server 
 
 -s          - stop the web server
 
