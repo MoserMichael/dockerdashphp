@@ -5,14 +5,13 @@ require_once __DIR__  . "/DockerRest/DockerRest.php";
 
 $image_id = $_GET['id'] ?? "";
 $json = file_get_contents('php://input');
-$json_data = json_decode($json, true);
-
+//$json_data = json_decode($json, true);
 fwrite(STDERR,"image: {$image_id} json: {$json}ֿ\n");
 
 $api = new DockerRest\DockerEngineApi();
 $stat = true;
 
-list ($res, $body) = $api->containerCreate($json_data);
+list ($res, $body) = $api->containerCreate($json);
 if ($res) {
     $create_resp = json_decode($body,JSON_OBJECT_AS_ARRAY);
 

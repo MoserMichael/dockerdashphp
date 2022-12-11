@@ -210,7 +210,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         request["AttachStdout"]=true;
         request["AttachStderr"]=true;
         request["Tty"]=false;
-        
+
         return request;
     }
 
@@ -333,7 +333,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
     <tr id="row1">
         <td style="width: 0">
             <select name="cmd_type" id="cmd_type" >
-                <option value="Command">Command</option>
+                <option value="Cmd">Command</option>
                 <option value="Entrypoint">Entrypoint</option>
             </select>
         </td>
