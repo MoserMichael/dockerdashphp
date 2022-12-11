@@ -23,42 +23,6 @@ require_once __DIR__ . "/../vendor/autoload.php";
 require_once __DIR__  . "/DockerRest/DockerRest.php";
 
 
-function make_docker_inspect_link($row_val, $json) : string {
-
-    $ps="";
-    $state = $json["State"];
-    if ($state == "running") {
-        $ps="&nbsp; <a href='/gen.php?cmd=top&id={$row_val}'>/top/</a> &nbsp; <a href='/gen.php?cmd=stats&id={$row_val}'>/stats/</a>";
-    }
-
-    $id = $json["ID"];
-    
-    if ($state == "running") {
-        $ps = "{$ps}&nbsp;<a href='/attach.php?id={$id}'><br/><b>/Console/</b></a>";
-    }
-
-    return "<a title='inspect container' href='/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/logs.php?id={$row_val}&since=10m'>/logs/</a>{$ps}";
-
-    //return "<a title='inspect' href='/gen.php?cmd=inspectc&id={$row_val}'>{$row_val}</a>&nbsp; <a href='/logs.php?id={$row_val}&since=10m'>/logs/</a>";
-
-}
-
-function make_docker_state_link($row_val, $json) : string {
-    $id = $json["ID"];
-    $links = "";
-    if ($json["State"] == "running") {
-        $links = "{$links}&nbsp;<a href='/gen.php?cmd=pause&id={$id}'>/Pause/</a>";
-        $links = "{$links}&nbsp;<a href='/gen.php?cmd=stop&id={$id}'>/Stop/</a>";
-        $links = "{$links}&nbsp;<a href='/gen.php?cmd=kill&id={$id}'>/Kill/</a>";
-    }
-    if ($row_val == "paused") {
-        $links = "&nbsp;<a href='/gen.php?cmd=resume&id={$id}'>/Resume/</a>";
-    }
-
-    return $row_val . $links;
-}
-
-
 function make_api_id($row_val, $json) : string {
     $state = $json["State"];
 
@@ -72,8 +36,10 @@ function make_api_id($row_val, $json) : string {
     $id= substr($row_val, 0, 12);
 
     $ps = "{$ps}<a href='/logs.php?id={$id}&since=10m'>/logs/</a>";
+
     if ($state == "running") {
-        $ps = "{$ps}&nbsp;<br/><a href='/attach.php?id={$id}'><b>/Console/</b></a>";
+        $diffs = "<a href='/containerDiff.php?id={$id}'>/diffs/</a>";
+        $ps = "{$ps}&nbsp;{$diffs}<br/><a href='/attach.php?id={$id}'><b>/Console/</b></a>";
     }
 
     return "<a title='inspect container' href='/gen.php?cmd=inspectc&id={$id}'>{$id}</a><br/>{$ps}";

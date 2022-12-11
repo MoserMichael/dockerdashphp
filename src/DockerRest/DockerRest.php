@@ -130,12 +130,17 @@ class DockerEngineApi extends HttpHandler {
         return $this->sendCommonRequest($url, null, 204, self::MethodPost);
     }
 
-    public function containerStats(string $id, $stream=false)
-    {
+    public function containerDiff(string $id) {
+        $ver = self::$dockerApiVersion;
+        $url = "/{$ver}/containers/{$id}/changes";
+        return $this->sendCommonRequest($url, null, 200, self::MethodGet);
+    }
+
+
+    public function containerStats(string $id, $stream=false) {
         $ver = self::$dockerApiVersion;
         $url = "/{$ver}/containers/{$id}/stats?stream={$stream}";
         return $this->sendCommonRequest($url, null, 200, self::MethodGet);
-
     }
 
     public function containerProcessList(string $id) {

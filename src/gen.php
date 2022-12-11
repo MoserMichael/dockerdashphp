@@ -123,6 +123,15 @@ function make_container_stop($id) {
     return array("Failed to pause container {$id} : " . $msgRaw);
 }
 
+function make_container_diff($id) {
+    $runner = new DockerRest\DockerEngineApi();
+    list($ok, $msgRaw) = $runner->containerDiff($id);
+    if ($ok) {
+        return array("Container {$id} stopped");
+    }
+    return array("Failed to pause container {$id} : " . $msgRaw);
+}
+
 function make_search($term) {
     $runner = new DockerRest\DockerEngineApi();
     list($ok, $jsonRaw) = $runner->imageSearch($term);
@@ -205,18 +214,14 @@ $cmd_def = array(
             "Search the Docker Hub for images",
             False,
             "make_search"),
-    'pull' => array(
-            "docker pull %s &",
-            "docker pull",
-            "Start pulling an image in the background",
-            False,
-            ""),
-    'run' => array(
-            "docker run %s &",
-            "docker run",
-            "Run a command in a new container",
-            False,
-            ""),
+
+    'diff' => array(
+        "docker diff %s",
+        "Inspect changes to files or directories on a container's filesystem",
+        "Inspect changes to files or directories on a container's filesystem",
+        False,
+        "make_container_diff"),
+
 );
 
 list($command, $tbl_title, $page_title, $is_json, $func_name) = $cmd_def[$cmd];
