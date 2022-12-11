@@ -28,11 +28,17 @@ function make_api_id($row_val,$json) : string {
     $name = @$json["RepoTags"][0];
 
     $rmi="<a href='/gen.php?cmd=rmi&id={$row_val}'>/remove image/</a>";
+    $history="<a href='/imageHistory.php?id={$row_val}'>/History/</a>";
+
     $run="<a href='/run.php?ID={$image}&name={$name}'>/create & run/</a>";
 
     $link = make_inspect_imagelink($row_val);
-    return "&nbsp;{$link}<br/>{$rmi}&nbsp;{$run}";
+    return "{$link}&nbsp;{$history}<br/>{$rmi}&nbsp;{$run}";
 
+}
+
+function make_size($row_val, $json) : string {
+    return base\human_readable_size($row_val);
 }
 
 function make_inspect_imagelink(string $value ) : string {
@@ -71,9 +77,9 @@ $tbl = new base\FmtTable(array(
     "RepoDigests" => array("Repository", __NAMESPACE__ . "\\make_api_repo_name"),
     "Labels" => array("Labels",  __NAMESPACE__ . "\\make_api_labels"),
     "Created" => array("CreatedSince", __NAMESPACE__ . "\\make_api_created"),
-    "Size" => "Size",
+    "Size" => array("Size", __NAMESPACE__ . "\\make_size"),
     "Shared Size" => "SharedSize",
-    "Virtual Size" => "VirtualSize"
+    "VirtualSize" => array("Virtual Size", __NAMESPACE__ . "\\make_size"),
 ));
 
 $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);

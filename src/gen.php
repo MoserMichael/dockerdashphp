@@ -227,10 +227,11 @@ $json = call_user_func($func_name,$id);
 ?>
 
 <h3><?php echo $page_title; ?></h3>
+
+
 Command: <code><?php echo $cmd_str; ?></code>
 
 <?php
-
 
 $tbl = new base\FmtTable(array(
     $tbl_title => $tbl_title,

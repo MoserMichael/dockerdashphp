@@ -150,6 +150,13 @@ class DockerEngineApi extends HttpHandler {
         return $this->sendCommonRequest($url, null, 200, self::MethodPost);
     }
 
+    public function imageHistory(string $imageName)
+    {
+        $ver = self::$dockerApiVersion;
+        $url = "/{$ver}/images/{$imageName}/history";
+        return $this->sendCommonRequest($url, null, 200, self::MethodGet);
+    }
+
     public function imagePull(string $imageName, DockerEngineAuthentication $auth = null, string $tag = null) {
         $ver = self::$dockerApiVersion;
         $hdr = "";

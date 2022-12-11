@@ -103,6 +103,10 @@ function make_api_created_at($row_val, $json) : string {
     return date('Y-m-d H:i:s' ,$row_val);
 }
 
+function make_size($row_val, $json) : string {
+    return base\human_readable_size($row_val);
+}
+
 function make_api_networks($row_val, $json) : string {
     $obj = @$json['NetworkSettings']['Networks'];
 
@@ -152,24 +156,8 @@ $tbl = new base\FmtTable(array(
     "Image" => array("Image", "make_api_image"),
     "Command" => "Command",
     "NetworkSettings" => array("NetworkSettings", __NAMESPACE__ . "\\make_api_networks"),
-    "RootFs Size" => "SizeRootFs",
+    "SizeRootFs" => array("RootFs Size",  __NAMESPACE__ . "\\make_size"),
     "Mounts" => array("Mounts",  __NAMESPACE__ . "\\make_api_mounts"),
-    /*
-    "ID" => array("ID", __NAMESPACE__ . "\\make_docker_inspect_link"),
-    "State" => array("State", __NAMESPACE__ . "\\make_docker_state_link"),
-    "Names" => "Names",
-    "Image" => "Image",
-    "Status" => "Status",
-    "Created At" => "CreatedAt",
-    "Running For" => "RunningFor",
-    "Command" => "Command",
-    "Local Volumes" => "LocalVolumes",
-    "Mounted Volumes" => "Mounts",
-    "Disk Size" => "Size",
-    "Attached Networks" => "Networks",
-    "Exposed Ports" => "Ports",
-    "Labels" => "Labels",
-    */
 ));
 $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
 echo $tbl->format($json);

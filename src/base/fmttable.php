@@ -1,5 +1,28 @@
 <?php namespace base;
 
+function human_readable_size($size) {
+    $sizes = array( "", "KB", "MB", "GB", "TB", "EB", "ZB" );
+    $prevLimit = 1;
+    $limit = 1024;
+
+    $i = 0;
+    foreach( $sizes as $suffix) {
+        if ($size < $limit) {
+            $sval = strval($size/$prevLimit );
+            $pos = strpos($sval,".");
+            if ($pos !== false) {
+                $sval = substr($sval, 0, $pos+2);
+            }
+            return $sval . $suffix;
+        }
+        $prevLimit = $limit;
+        $limit *= 1024;
+        $i += 1;
+    }
+    return strval($size);
+
+}
+
 class FmtTable {
 
     private array $tbl_def;
