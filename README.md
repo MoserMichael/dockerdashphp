@@ -7,6 +7,17 @@ This exercise runs a small web application that allows to run docker commands.
 It displays the running containers and existing images in a table, allows to inspect entries and view container logs & errors.
 You can also attach and run a shell inside a running container, the shell will run in the browser window!.
 
+_Warning: currently the tool runs in http raw, no TLS_
+
+### Running it in a docker
+
+- Download the following bash script [run-in-docker.sh](https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh)
+- ```chmod +x ./run-in-docker.sh```
+- ```./run ./run-in-docker.sh -r``` - start the tool in the docker
+- On the same machine: use your browser and navigate to http://localhost:8000/images.php
+
+### Building & Running locally 
+
 How to use this stuff, after cloning this repository:
 
 - make sure that php-7.4 and composer are installed
@@ -27,6 +38,6 @@ I could solve this by switching to the "docker engine api" - https://docs.docker
 Interesting detail: ```curl``` can send http requests via a unix domain socket (the docker cli is sending REST requests to the the docker daemon via a unix domain socket), didn't know that:
 The [example](https://docs.docker.com/engine/api/sdk/examples/) shows the following way to do ```docker ps``` : ```curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/json```
 
-Now If I use the docker engine api for all commands, then I would be able to host this project in a docker container, that's probably the next step... (that's because I can mount the unix socket /var/run/docker.sock into the file system of the docker).
+It is possible to run the tool in a docker container, igven hat the docker engine api is used for all commands (that's because I can mount the unix socket /var/run/docker.sock into the file system of the docker).
 
 
