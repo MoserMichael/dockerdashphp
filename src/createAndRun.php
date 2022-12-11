@@ -38,6 +38,9 @@ $api->close();
 if (!$stat) {
     http_response_code(501);
 }
+if ($stat && $body == "") {
+    $body = "Container {$container_id} has been started successfully";
+}
 echo "$body";
 
 

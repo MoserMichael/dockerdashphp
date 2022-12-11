@@ -41,6 +41,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         let hostRows = [ "healthRow1", "healthRow2"] ;
         show_rows_on_checkbox(hostRows, "health_check");
     }
+
     function onHostCfg() {
         let hostRows = [ "hostRow1", "hostRow2", "hostRow3", "hostRow4"];
         show_rows_on_checkbox(hostRows, "host_cfg");
@@ -205,6 +206,11 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         makeHealthCheckSection(request);
         makeHostConfiguration(request);
 
+        request["AttachStdin"]= false;
+        request["AttachStdout"]=true;
+        request["AttachStderr"]=true;
+        request["Tty"]=false;
+        
         return request;
     }
 
@@ -221,9 +227,18 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             container_name = urlencode(container_name);
         }
 
+        xmlHttp.onreadystatechange = function() {
+            if (this.readyState == 4) {
+                let statusRows = [ "loading_image_tr" ];
+                show_rows(statusRows, true);
+                document.getElementById("result_status").innerHTML =  this.responseText;
+            }
+        };
+
         console.log("sending...");
         xmlHttp.open( "POST", "/createAndRun.php?id=" + image_id , false );
         xmlHttp.send(json_pretty);
+
     }
 
     function health_check_type_changed() {
@@ -486,5 +501,12 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             <input type="submit" value="Start" onclick="onRun()"/>
         </td>
     </tr>
+
+    <tr id="loading_image_tr" style="visibility: collapse">
+        <td colspan="8">
+            <div id="result_status" style="font-family: monospace"></div>
+        </td>
+    </tr>
+
 </table>
 

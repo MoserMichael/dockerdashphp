@@ -65,13 +65,35 @@ while getopts "hvrs:p:c:" opt; do
    esac
 done
 
-function check_docker_engine_running() {
-    # TODO
+function assert_bins_in_path {
+  if [[ -n $ZSH_VERSION ]]; then
+    builtin whence -p "$1" &> /dev/null
+  else  # bash:
+    builtin type -P "$1" &> /dev/null
+  fi
+  if [[ $? != 0 ]]; then
+    echo "Error: $1 is not in the current path"
+    exit 1
+  fi    
+  if [[ $# -gt 1 ]]; then
+    shift  # We've just checked the first one
+    assert_bins_in_path "$@"
+  fi
+}
+
+
+check_docker_engine_running() {
+    assert_bins_in_path "docker"
+    docker ps >/dev/null 2>&1
+    if [[ $? != 0 ]]; then
+        echo "Error: docker engine not running"
+        exit 1
+    fi
 }
 
 if [[ $ACTION == 'start' ]]; then
 
-    check_docker_engine_running()
+    check_docker_engine_running
  
     D="$(docker version --format='{{json .Client.APIVersion}}')"
  
