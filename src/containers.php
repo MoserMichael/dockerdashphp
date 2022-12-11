@@ -57,7 +57,7 @@ function make_api_status($row_val, $json) : string {
     if ($json["State"] == "paused") {
         $links = "{$links}&nbsp;<a href='/gen.php?cmd=resume&id={$id}'>/Resume/</a>";
     }
-    return $json["State"] . " - " . $json["Status"] . " " . $links;
+    return $json["State"] . " - " . $json["Status"] . "<br/>" . $links;
 }
 
 function make_api_names($row_val, $json) : string {
@@ -105,7 +105,29 @@ function make_api_image($row_val, $json) : string {
     if (str_starts_with($row_val, "sha256:")) {
         $hash = substr($row_val, strlen("sha256:"), 12);
     }
-    $link = "<a title='inspect image' href='/gen.php?cmd=inspecti&id={$hash}'>{$hash}</a>";
+
+    $link = "";
+
+    $runner = new DockerRest\DockerEngineApi();
+    list ($status, $body) = $runner->inspectImage($hash);
+    if ($status) {
+        $arr = json_decode($body, JSON_OBJECT_AS_ARRAY);
+        if ($arr != null) {
+            $tags = @$arr['RepoTags'];
+            if ($tags != 0) {
+                $tagNames = join(",", $tags);
+                $link = "<a title='inspect image' href='/gen.php?cmd=inspecti&id={$hash}'>{$tagNames}</a>";
+            }
+        }
+    }
+
+    if ($link == "") {
+        $link = "<a title='inspect image' href='/gen.php?cmd=inspecti&id={$hash}'>{$hash}</a>";
+    }
+
+
+    $runner->close();
+
     return $link;
 }
 
