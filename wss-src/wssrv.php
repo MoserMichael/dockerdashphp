@@ -347,7 +347,7 @@ function runServer($listenPort) : void {
     
     $trace = getenv("TRACE");
     if ($trace !== false) {
-        $trace = intval(trace);
+        $trace = intval($trace);
         HttpHandler::setTrace($trace>0, $trace>1);
         DockerBinaryStreamBase::setTrace($trace>1);
     }
