@@ -1,4 +1,3 @@
-
 <?php require_once __DIR__ . "/base/nocache.php"; ?>
 <html>
 <?php include( __DIR__ . "/static-files/css.css"); ?>
