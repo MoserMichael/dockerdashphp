@@ -212,16 +212,26 @@ class DockerEngineApi extends HttpHandler {
     }
 
     //*** list images
-    public function imageList() {
+    public function imageList($show_all = true) {
         $ver = self::$dockerApiVersion;
-        $url = "/{$ver}/images/json?all=true&digests=true";
+        $url = "/{$ver}/images/json?all=true&digests=";
+        if ($show_all) {
+            $url .= "true";
+        } else {
+            $url .= "false";
+        }
+
         return $this->sendCommonRequest($url, null, 200, self::MethodGet);
     }
 
     //*** list containers
-    public function containersList() {
+    public function containersList($show_all = true) {
         $ver = self::$dockerApiVersion;
-        $url = "/{$ver}/containers/json?all=true&size=true";
+        $all = "false";
+        if ($show_all) {
+            $all = "true";
+        }
+        $url = "/{$ver}/containers/json?all={$all}&size=true";
         return $this->sendCommonRequest($url, null, 200, self::MethodGet );
     }
 

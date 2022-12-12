@@ -9,11 +9,33 @@
 require_once __DIR__ . "/hdr.php";
 
 show_hdr(0);
+
+$show_all = $_GET['all'] ?? "true";
+
+$show_all_checked = "";
+if ($show_all=="true") {
+    $show_all = true;
+    $show_all_checked = 'checked';
+} else {
+    $show_all = false;
+}
+
 ?>
-[ <a href="/gen.php?cmd=cprune&id=a">Remove/Prune Unused Containers</a> ]
+<script>
+
+    function onShowAll() {
+        let on = document.getElementById('show_all').checked;
+        let urlParams = "?all=" + on;
+        let location = (window.location.href.split('?')[0]) + urlParams;
+        window.location.href = location;
+
+    }
+</script>
+
+[ <input type="checkbox" id="show_all" <?php echo $show_all_checked; ?> onchange="onShowAll()"> <label for="show_all">Show All Container</label> ] &nbsp; [ <a href="/gen.php?cmd=cprune&id=a">Remove/Prune Unused Containers</a> ]
 
 <h3>Containers</h3>
-Command: <code>docker ps -a</code>
+Command: <code>docker ps <?php if ($show_all) { echo "-a"; } ?></code>
 
 <?php
 
@@ -134,7 +156,7 @@ function make_api_image($row_val, $json) : string {
 
 
 $runner = new DockerRest\DockerEngineApi();
-list($ok, $jsonRaw) = $runner->containersList();
+list($ok, $jsonRaw) = $runner->containersList($show_all);
 
 $tbl = new base\FmtTable(array(
     "Id" => array("ID", __NAMESPACE__ . "\\make_api_id"),

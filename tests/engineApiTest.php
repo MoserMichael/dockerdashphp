@@ -12,7 +12,7 @@ final class EngineApiTes extends TestCase
     public function testImages() : void
     {
         $api = new DockerEngineApi();
-        list($res, $images) = $api->imageList();
+        list($res, $images) = $api->imageList(true);
         echo "images:\n$images\n";
         
         $this->assertTrue($res);
