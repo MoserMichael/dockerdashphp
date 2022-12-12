@@ -1,7 +1,17 @@
 
 let value_parser = makeAlternativeParser([
-    makeRegexParser(/^'(\\.|[^'])*'/, "string-const" ),
-    makeRegexParser(/^"(\\.|[^"])*"/, "string-const" ),
+    makeTransformer(
+        makeRegexParser(/^'(\\.|[^'])*'/, "string-const" ),
+        function(arg) {
+            return arg.substring(1,arg.length-1);
+        }
+    ),
+    makeTransformer(
+        makeRegexParser(/^"(\\.|[^"])*"/, "string-const" ),
+        function(arg) {
+            return arg.substring(1,arg.length-1);
+        }
+    ),
     makeRegexParser(/^(\\.|[^\ \;\&\#\|\<\>\`\$\*\(\)\'\"\{\}])*/, "safe-token"), // don't accept unsafe chars: https://www.oreilly.com/library/view/learning-the-bash/1565923472/ch01s09.html
 ]);
 
