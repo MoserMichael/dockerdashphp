@@ -149,7 +149,9 @@ class HttpHandler {
             $toSend = $len - $sendOffset;
             $ret = @fwrite($this->sock, $requestText, $toSend);
 
-            fwrite(STDERR, "sending offset: {$sendOffset} Len: {$toSend}/{$len}\n");
+            if ($trace) {
+                fwrite(STDERR, "sending offset: {$sendOffset} Len: {$toSend}/{$len}\n");
+            }
 
             if ($ret === false) {
                 $err = error_get_last();
