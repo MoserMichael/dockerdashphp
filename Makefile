@@ -8,7 +8,7 @@ test: ./${TESTS_DIR}
 	date
 
 run:
-	./run.sh 2>&1 | tee run.log
+	TRACE=2 ./run.sh 2>&1 | tee run.log
 
 runphp:
 	NUM_WORKERS=10 php -S "0.0.0.0:8001" -t src

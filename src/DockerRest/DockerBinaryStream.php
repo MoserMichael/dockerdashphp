@@ -17,6 +17,10 @@ class DockerBinaryStreamBase  {
     const StateParseDockerMessageBody = 2;
     const HeaderMsgSize = 8;
 
+    public static function setTrace($trace) {
+        self::$TRACE = $trace;
+    }
+
     public function __construct(DockerBinaryStreamHandler $streamHandler = null) {
         $this->streamHandler = $streamHandler;
         $this->state = self::StateParseDockerMessageHeader;

@@ -69,7 +69,6 @@ class DockerEngineApi extends HttpHandler {
         $body = file_get_contents($localPath);
 
         $len = strlen($body);
-        fwrite(STDERR, "sending file {{$localPath} payload len: {$len}\n");
 
         return $this->sendCommonRequest($url, $body, 200, self::MethodPut, $hdr);
     }

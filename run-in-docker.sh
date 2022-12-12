@@ -29,15 +29,16 @@ Common options:
 
 -c  <image> - override the container image location (default ${IMAGE_LOCATION})
 -v          - run verbosely
-
+-d          - enable trace within container
 EOF
 
 exit 1
 }
 
 SSL="off"
+TRACE=0
 
-while getopts "hvrs:p:c:" opt; do
+while getopts "hvdrsp:c:" opt; do
   case ${opt} in
     h)
         Help
@@ -58,7 +59,10 @@ while getopts "hvrs:p:c:" opt; do
     v)
         set -x
         export PS4='+(${BASH_SOURCE}:${LINENO}) '
-        ;; 
+        ;;
+    d)
+        ((TRACE+=1))
+        ;;
     *)
         Help "Invalid option"
         ;;
@@ -99,11 +103,15 @@ if [[ $ACTION == 'start' ]]; then
  
     export DOCKER_API_VERSION="v${D//\"/}"
 
-    docker run --rm --name docker-web -v /var/run/docker.sock:/var/run/docker.sock -p $PORT:$PORT -p $NEXT_PORT:$NEXT_PORT -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -dt ${IMAGE_LOCATION} 
+    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -p $PORT:$PORT -p $NEXT_PORT:$NEXT_PORT -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE-${TRACE} -dt ${IMAGE_LOCATION}
     echo "Listen on http://${HOST}:${PORT}/images.php"
 else 
   if [[ $ACTION == 'stop' ]]; then
     DOCKER_ID=$(docker ps | grep ${IMAGE_LOCATION}[[:space:]] | awk '{ print $1 }')
+    if [[ ${DOCKER_ID} == "" ]]; then
+        echo "Docker is already stopped"
+        exit 1
+    fi
     docker stop $DOCKER_ID
   else
     Help 'must use either to start the server -r or to stop it -s'

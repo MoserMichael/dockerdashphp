@@ -12,6 +12,8 @@ use \DockerRest\ChunkConsumerInterface;
 use \DockerRest\DockerEngineAuthentication;
 use \DockerRest\EventDrivenChunkParser;
 use \DockerRest\DockerBinaryStreamChunkConsumer;
+use \DockerRest\HttpHandler;
+use \DockerRest\DockerBinaryStreamBase;
 
 use React\EventLoop\LoopInterface;
 use React\EventLoop\Loop;
@@ -83,7 +85,7 @@ class DockerCommonBinaryStreamCtx implements DockerBinaryStreamHandler {
                 }
             }
         }
-        fwrite(STDERR, "nested classes: {$ty} {$t} {$tt} {$ttt} {$tttt}\n");
+        //fwrite(STDERR, "nested classes: {$ty} {$t} {$tt} {$ttt} {$tttt}\n");
     }
 
     public function getChunkConsumerInterface() : ChunkConsumerInterface {
@@ -157,14 +159,14 @@ class WebsocketConnectionComponent implements MessageComponentInterface {
     }
 
     function onOpen(ConnectionInterface $conn) {
-        fwrite(STDERR,"onOpen\n");
+        //fwrite(STDERR,"onOpen\n");
     }
     
     function onClose(ConnectionInterface $clientConn) {
-        fwrite(STDERR,"onClose\n");
+        //fwrite(STDERR,"onClose\n");
         $objId = spl_object_id($clientConn);
         if (array_key_exists($objId, $this->mapConnToHandler)) {
-            fwrite(STDERR,"closing connection handler\n");
+            //fwrite(STDERR,"closing connection handler\n");
 
             $handler = $this->mapConnToHandler[$objId];
             unset($this->mapConnToHandler[$objId]);
@@ -290,7 +292,7 @@ class WebsocketConnectionComponent implements MessageComponentInterface {
             $to = $jsonMsg['until'];
         }
 
-        fwrite(STDERR, "openLogs container: {$containerId} follow: {$followLogs} from: {$from} to: {$to}\n");
+        //fwrite(STDERR, "openLogs container: {$containerId} follow: {$followLogs} from: {$from} to: {$to}\n");
 
         $dockerSocket = DockerEngineApi::openDockerSocket();
         if ($dockerSocket === false) {
@@ -342,7 +344,14 @@ class WebsocketConnectionComponent implements MessageComponentInterface {
 $listenPort = 8002;
 
 function runServer($listenPort) : void {
-
+    
+    $trace = getenv("TRACE");
+    if ($trace !== false) {
+        $trace = intval(trace);
+        HttpHandler::setTrace($trace>0, $trace>1);
+        DockerBinaryStreamBase::setTrace($trace>1);
+    }
+    
     $docker = new WebsocketConnectionComponent();
     $loop = Loop::get();
     $server = IoServer::factory(

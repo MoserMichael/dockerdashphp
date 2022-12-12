@@ -6,6 +6,7 @@ NUM_WORKERS=10
 
 PORT_PHP="${PORT_PHP:=8001}"
 PORT_WSS="${PORT_WSS:=8002}"
+export TRACE="${TRACE}"
 
 if [[ ${DOCKER_API_VERSION} == "" ]]; then
     D=$(docker version --format='{{json .Client.APIVersion}}') 

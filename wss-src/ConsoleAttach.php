@@ -107,7 +107,7 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
         $this->msgCount += 1;
 
         if ($this->rows != -1 && $this->cols != -1) {
-            fwrite(STDERR, "resize after connect rows: {$this->rows} cols: {$this->cols}\n");
+            //fwrite(STDERR, "resize after connect rows: {$this->rows} cols: {$this->cols}\n");
             $this->resize($this->rows, $this->cols);
             $this->rows = -1;
             $this->cols = -1;
@@ -140,7 +140,7 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
 
     private function onFailConnect() : bool {
 
-        fwrite(STDERR, "Start last effort to run the shell!\n");
+        //fwrite(STDERR, "Start last effort to run the shell!\n");
 
         $this->loop->removeReadStream($this->getSocket());
         $this->dockerBinaryStream->doClose();
@@ -150,7 +150,7 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
         // find out which os the image is running.
         $shellPath = $this->makeShellPath($this->containerId, $api);
 
-        fwrite(STDERR, "shell path {$shellPath}\n");
+        //fwrite(STDERR, "shell path {$shellPath}\n");
 
         if (file_exists($shellPath)) {
             // copy shell path to container
