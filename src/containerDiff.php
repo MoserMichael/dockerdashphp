@@ -37,7 +37,10 @@ $tbl = new base\FmtTable(array(
     "Path" => "Path"
 ));
 
-$json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
 
+$json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
+if ($json == null) {
+    $json = json_decode("{}", JSON_OBJECT_AS_ARRAY);
+}
 echo $tbl->format($json);
 
