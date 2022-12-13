@@ -63,7 +63,8 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
 
         let i=0;
         for(;i<res.length;++i) {
-            labels[res[0]] = res[2];
+            let entry = res[i];
+            labels[entry[0]] = entry[2];
         }
         return labels;
     }
