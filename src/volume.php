@@ -28,7 +28,10 @@ function make_labels($row_val, $json) : string {
      $labels = $json['Labels'];
      if ($labels != null) {
          foreach ($labels as $k => $v) {
-             $res .= "$k => $v";
+             if ($res != "") {
+                 $res .= " ";
+             }
+             $res .= "$k=$v";
          }
      }
      return $res;

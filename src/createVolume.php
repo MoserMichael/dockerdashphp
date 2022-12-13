@@ -78,26 +78,32 @@ show_hdr(-1);
 
         val = document.getElementById('labels').value.trim();
         if (val != "") {
-            req['Labels'] = {};
+            let cnt = {};
 
             let res = runParser(val, makeLabelNameParser(), "Volume labels");
 
             let i = 0;
             for (; i < res.length; ++i) {
-                req['Labels'][res[0]] = res[2];
+                let entry = res[i];
+                cnt[entry[0]] = entry[2];
             }
+
+            req['Labels'] = cnt;
         }
 
         val = document.getElementById('options').value.trim();
         if (val != "") {
-            req['DriverOpts'] = {};
+            let cnt = {};
 
             let res = runParser(val, makeLabelNameParser(), "Volume options");
 
             let i = 0;
             for (; i < res.length; ++i) {
-                req['DriverOpts'][res[0]] = res[2];
+                let entry = res[i];
+                cnt[entry[0]] = entry[2];
             }
+
+            req['DriverOpts'] = cnt;
         }
 
         let json_pretty = JSON.stringify(req, null, 4)
