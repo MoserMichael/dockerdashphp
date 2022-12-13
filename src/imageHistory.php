@@ -48,10 +48,11 @@ function make_size($row_val) : string {
 function make_id($imageId, $json) : string {
     if (str_starts_with($imageId,"sha256:")) {
         $imageId = substr($imageId, strlen("sha256:"), 12);
-        return $imageId;
+
     }
-    return "";
+    return "<a title='inspect image' href='/gen.php?cmd=inspecti&id={$imageId}'>{$imageId}</a>";
 }
+
 $runner = new DockerRest\DockerEngineApi();
 list ($ok,$jsonRaw) = $runner->imageHistory($id);
 

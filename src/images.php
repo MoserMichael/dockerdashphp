@@ -50,10 +50,10 @@ function make_api_id($row_val,$json) : string {
     $rmi="<a href='/gen.php?cmd=rmi&id={$row_val}'>/remove image/</a>";
     $history="<a href='/imageHistory.php?id={$row_val}'>/History/</a>";
 
-    $run="<a href='/run.php?ID={$image}&name={$name}'>/create & run/</a>";
+    $run="<a href='/run.php?ID={$image}&name={$name}'>/create container/</a>";
 
     $link = make_inspect_imagelink($row_val);
-    return "{$link}&nbsp;{$history}<br/>{$rmi}&nbsp;{$run}";
+    return "{$link}&nbsp;{$history}<br/>{$rmi}<br/>{$run}";
 
 }
 
