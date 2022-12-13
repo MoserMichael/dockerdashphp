@@ -1,9 +1,13 @@
 TODO:
 
-- the way that i force ratchet to flush the write stream sucks. (but i don't know better).
+- volumes
 
-- must have some form of SSL
-    - container: must do SSL. Look how to run the show with apache.
+- pull from custom registry (add field in form)
+
+- the way that i force ratchet to flush the write stream sucks. (but i don't know better). /will need that for TLS support/
+
+- must have some form of TLS
+    - container: must do TLS. Look how to run the show with apache.
             https://hub.docker.com/_/php
 
                 FROM php:7.2-apache

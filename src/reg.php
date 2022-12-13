@@ -246,7 +246,7 @@ function on_select_auth() {
 }
 </script>
     
-<h3>Search for docker image</h3>
+<h3>Search the Docker Hub for images</h3>
 <form action="/searchres.php">
     <input type="hidden" name="cmd" value="search"/>
     Image: <input name="id" type="input"/>

@@ -52,10 +52,10 @@ class FmtTable {
                     $val_key =  $tbl_def_val[0];
                     $val_func = $tbl_def_val[1];
 
-                    $val = $row[ $tbl_def_key ];
+                    $val = @$row[ $tbl_def_key ];
                     $val = call_user_func($val_func, $val, $row);
                 } else if (is_string($tbl_def_val)) {
-                    $val = $row[ $tbl_def_val ];
+                    $val = @$row[ $tbl_def_val ];
                 }
 
                 if ($val == null) {

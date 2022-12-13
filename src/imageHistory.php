@@ -21,6 +21,14 @@ require_once __DIR__ . "/base/fmttable.php";
 require_once __DIR__ . "/../vendor/autoload.php";
 require_once __DIR__  . "/DockerRest/DockerRest.php";
 
+$seq = 1;
+
+function make_seq($row_val, $json) : string {
+    global $seq;
+    $ret = "{$seq}";
+    $seq += 1;
+    return $ret;
+}
 
 function make_created($row_val,$json) : string {
     return date('Y-m-d H:i:s',$row_val);
@@ -48,6 +56,7 @@ $runner = new DockerRest\DockerEngineApi();
 list ($ok,$jsonRaw) = $runner->imageHistory($id);
 
 $tbl = new base\FmtTable(array(
+     "Sequence" => array("Sequence" ,__NAMESPACE__ . "\\make_seq"),
      "Id"=>array("Id",__NAMESPACE__ . "\\make_id"),
      "Created"=>array("Created", __NAMESPACE__ . "\\make_created"),
      "Size"=>array("Size", __NAMESPACE__ . "\\make_size"),
