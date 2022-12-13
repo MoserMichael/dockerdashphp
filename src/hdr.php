@@ -4,6 +4,7 @@ function show_hdr($idx) {
     $tbl = array(
         "Containers" => "/containers.php",
         "Images" => "/images.php",
+        "Volumes" => "/volume.php",
         "Pull/Search" => "/reg.php",
         "Versions/EngineInfo" => "/version.php"
     );

@@ -161,6 +161,24 @@ class DockerEngineApi extends HttpHandler {
         return $this->sendCommonRequest($url, null, 200, self::MethodGet);
     }
 
+    public function volumeCreate($json) {
+        $ver = self::$dockerApiVersion;
+        $url = "/{$ver}/volumes/create";
+        return $this->sendCommonRequest($url, $json, 201, self::MethodPost);
+    }
+
+    public function volumeList() {
+        $ver = self::$dockerApiVersion;
+        $url = "/{$ver}/volumes";
+        return $this->sendCommonRequest($url, null, 200, self::MethodGet);
+    }
+
+    public function volumePrune() {
+        $ver = self::$dockerApiVersion;
+        $url = "/{$ver}/volumes/prune";
+        return $this->sendCommonRequest($url, null, 200, self::MethodPost   );
+    }
+
     public function imagePull(string $imageName, DockerEngineAuthentication $auth = null, string $tag = null) {
         $ver = self::$dockerApiVersion;
         $hdr = "";

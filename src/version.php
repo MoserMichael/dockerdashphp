@@ -8,7 +8,7 @@
 <?php
 require_once __DIR__ . "/hdr.php";
 
-show_hdr(3);
+show_hdr(4);
 ?>
 <h3>Docker version</h3>
 Command: <code>docker version</code>

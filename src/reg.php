@@ -4,7 +4,7 @@
 <?php
 require_once __DIR__ . "/hdr.php";
 
-show_hdr(2);
+show_hdr(3);
 
 ?>
 

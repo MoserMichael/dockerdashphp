@@ -44,6 +44,12 @@ function make_iprune($id) {
     return explode("\n",$jsonRaw);
 }
 
+function make_vprune($id) {
+    $runner = new DockerRest\DockerEngineApi();
+    list($ok, $jsonRaw) = $runner->volumePrune();
+    return explode("\n",$jsonRaw);
+}
+
 function format_top_entry($entry) {
     return implode("  ", $entry);
 }
@@ -141,6 +147,22 @@ function make_search($term) {
 
 }
 
+function make_volume($term) {
+    $json = file_get_contents('php://input');
+
+    $api = new DockerRest\DockerEngineApi();
+    $stat = true;
+
+    list ($res, $body) = $api->volumeCreate($json);
+
+    if ($res) {
+        echo "Volume created";
+    } else {
+        echo "Error: {$body}";
+    }
+    exit(0);
+}
+
 $cmd=$_GET['cmd'];
 $id = $_GET['id'];
 
@@ -208,6 +230,12 @@ $cmd_def = array(
             "Remove unused images",
             False,
             "make_iprune"),
+    'vprune' => array(
+            "docker volume prune",
+            "Volume Prune",
+            "Remove unused volumes",
+            False,
+            "make_vprune"),
     'search' => array(
             "docker search %s",
             "Image Sarch",
@@ -222,6 +250,12 @@ $cmd_def = array(
         False,
         "make_container_diff"),
 
+     "createv" => array(
+         "docker volume create %s",
+         "Create Volume",
+         "Create Volume",
+         False,
+         "make_volume"),
 );
 
 list($command, $tbl_title, $page_title, $is_json, $func_name) = $cmd_def[$cmd];
