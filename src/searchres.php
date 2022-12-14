@@ -8,7 +8,7 @@
 <?php
 require_once __DIR__ . "/hdr.php";
 
-show_hdr(1);
+show_hdr(-1);
 
 $term = $_GET['id'];
 ?>
@@ -21,6 +21,11 @@ require_once __DIR__ . "/base/fmttable.php";
 require_once __DIR__ . "/../vendor/autoload.php";
 require_once __DIR__  . "/DockerRest/DockerRest.php";
 
+
+function make_name($row_val, $json) : string {
+    $enc = urlencode($row_val);
+    return "<a href='/searchresdetails.php?arg={$enc}' title='search result details'>{$row_val}</a>";
+}
 
 
 $runner = new DockerRest\DockerEngineApi();
@@ -38,7 +43,7 @@ if (!$ok) {
 
 $tbl = new base\FmtTable(array(
 
-    "name" => "name",
+    "name" => array("name", "make_name"),
     "is_official" => "is_official",
     "star_count" => "star_count",
     "is_automated" => "is_automated",
