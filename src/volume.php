@@ -39,8 +39,14 @@ function make_labels($row_val, $json) : string {
 
 function make_options($row_val, $json) : string {
     $res = "";
-    foreach($json['Options'] as $k => $v) {
-        $res .= "$k => $v";
+    $options = $json['Options'];
+    if ($options != null) {
+        foreach ($options as $k => $v) {
+            if ($res != "") {
+                $res .= " ";
+            }
+            $res .= "$k=$v";
+        }
     }
     return $res;
 }
@@ -54,7 +60,7 @@ $tbl = new base\FmtTable(array(
         "Labels" => array("Labels", "make_labels"),
         "Scope" => "Scope",
         "Driver" => "Driver",
-        "Options" => array("Options", "make_labels"),
+        "Options" => array("Options", "make_options"),
         "Mountpoint" => "Mountpoint",
 ));
 
