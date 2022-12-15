@@ -11,8 +11,7 @@ _Warning: currently the tool runs in http raw, no TLS_
 
 ### Running it in a docker
 
-- Download the following bash script [run-in-docker.sh](https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh)
-  for example by running: ```curl https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh >run-in-docker.sh```
+- Download the following bash script ```curl https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh >run-in-docker.sh``` - or via link [run-in-docker.sh](https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh) 
 - ```chmod +x ./run-in-docker.sh```
 - ```./run ./run-in-docker.sh -r``` - start the local web server for this tool in the docker
 - On the same machine: use your browser and navigate to http://localhost:8000/images.php
