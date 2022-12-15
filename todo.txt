@@ -1,8 +1,9 @@
 TODO:
 
-- volumes
+- add floating help text for fields
 
-- pull from custom registry (add field in form)
+- create container screen
+    add option to attach volumes
 
 - the way that i force ratchet to flush the write stream sucks. (but i don't know better). /will need that for TLS support/
 
@@ -21,14 +22,6 @@ TODO:
 - ratchet: 'Closed without sending a request; it was probably just an unused speculative preconnection'
     - for logs: helps to add the time - 10m (url differs each time)
     
-- logs:
-    - follow logs: log div should be no bigger than the screen (?) if 'follow logs' is on then scroll automatically to the bottom
-        - if unchecking 'follow logs' then ignore further updates, without a refresh of the screen.
-
-        Example:
-            curl -vv --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/4c5342bf5c87/logs\?follow=true\&stdout=true\&stderr=true\&timestamps=true\&since=16691855 -H "Content-Type: application/json" --output x  
-
-
 DONE:
 
 --- docker create options

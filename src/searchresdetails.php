@@ -40,7 +40,7 @@ if ($next != "") {
 }
 
 ?>
-<h3>Search result details on tags</h3>
+<h3>List all tags for a given search result</h3>
 
 for artifact <b><?php echo $term_decoded; ?></b>
 
