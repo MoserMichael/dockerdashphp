@@ -13,8 +13,12 @@ _Warning: currently the tool runs in http raw, no TLS_
 
 - Download the following bash script ```curl https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh >run-in-docker.sh``` (or via link [run-in-docker.sh](https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh) )
 - ```chmod +x ./run-in-docker.sh```
-- ```./run-in-docker.sh -r``` This starts the local web server for this tool in the docker
-- On the same machine: use your browser and navigate to http://localhost:8000/images.php
+- ```./run-in-docker.sh -r -p 9000``` This starts the local web server for this tool in the docker and uses ports 9000 and 9001
+- On the same machine: use your browser and navigate to http://localhost:9000/images.php
+
+To stop the server
+
+- run ```./run-in-docker.sh -s```
 
 ### Building & Running locally 
 

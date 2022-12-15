@@ -113,6 +113,7 @@ else
         exit 1
     fi
     docker stop $DOCKER_ID
+    docker rm $DOCKER_ID || true
   else
     Help 'must use either to start the server -r or to stop it -s'
   fi
