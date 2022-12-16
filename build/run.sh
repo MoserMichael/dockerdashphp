@@ -4,8 +4,8 @@ set -x
 
 NUM_WORKERS=10
 
-PORT_PHP="${PORT_PHP:=8001}"
-PORT_WSS="${PORT_WSS:=8002}"
+PORT_PHP="${PORT_PHP:=8010}"
+PORT_WSS="${PORT_WSS:=8011}"
 export TRACE="${TRACE}"
 
 if [[ ${DOCKER_API_VERSION} == "" ]]; then

@@ -1,4 +1,6 @@
-FROM php:7.4-cli
+FROM php:7.4-apache
+
+WORKDIR /
 
 # get php composer
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
@@ -6,18 +8,28 @@ RUN php -r "if (hash_file('sha384', 'composer-setup.php') === '55ce33d7678c5a611
 RUN php composer-setup.php
 RUN php -r "unlink('composer-setup.php');"
 
+
+#RUN touch /var/run/docker.sock 
+RUN chown -R www-data:www-data /var/run
+
+
+
 # get git
 RUN apt-get update
 RUN apt-get install git zip curl jq -y
 
-# add sources
-ADD . /usr/src/myapp
-WORKDIR /usr/src/myapp
+COPY build/run-apache.sh /run-apache.sh
+COPY composer.json /var/www
+ADD  src /var/www/html
+ADD  wss-src /var/www/wss-src
+COPY build  /var/www/build
 
-# run composer
+WORKDIR /var/www
+
 ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN php /composer.phar update
 RUN php /composer.phar install
+
 RUN ./build/make-shells.sh
 
-CMD [ "/bin/bash", "-c", "./run.sh" ]
+CMD /run-apache.sh

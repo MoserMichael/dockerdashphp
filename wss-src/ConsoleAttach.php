@@ -1,9 +1,14 @@
 <?php
 
-require_once __DIR__ . "/../vendor/autoload.php";
-require_once __DIR__ . "/../src/base/runner.php";
-require_once __DIR__ . "/../src/DockerRest/DockerRest.php";
-require_once __DIR__ . "/../src/DockerRest/DockerBinaryStream.php";
+$rootDir = getenv("APP_ROOT");
+if ($rootDir == null) {
+    $rootDir = __DIR__ . "/../src/";
+}
+
+require_once "{$rootDir}/../vendor/autoload.php";
+require_once "{$rootDir}/base/runner.php";
+require_once "{$rootDir}/DockerRest/DockerRest.php";
+require_once "{$rootDir}/DockerRest/DockerBinaryStream.php";
 
 use \DockerRest\DockerEngineApi;
 use \DockerRest\DockerBinaryStreamHandler;
@@ -91,7 +96,7 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
     public function handleReadData() : void {
         $this->dockerBinaryStream->handleReadData();
     }
-
+        
     // upon reading a message from the docker socket
     public function onMessage($msg) {
         if ($this->msgCount < 3) {

@@ -103,7 +103,8 @@ if [[ $ACTION == 'start' ]]; then
  
     export DOCKER_API_VERSION="v${D//\"/}"
 
-    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p $PORT:$PORT -p $NEXT_PORT:$NEXT_PORT -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} -dt ${IMAGE_LOCATION}
+    
+    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p $PORT:80 -p $NEXT_PORT:$NEXT_PORT  -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} -dt ${IMAGE_LOCATION}
     echo "Listen on http://${HOST}:${PORT}/images.php"
 else 
   if [[ $ACTION == 'stop' ]]; then
