@@ -105,8 +105,8 @@ function make_api_networks($row_val, $json) : string {
 
     foreach($json["Ports"] as $portDef) {
        $ip = @$portDef['IP'];
-       $from = @$portDef['PrivatePort'];
-       $to = @$portDef['PublicPort'];
+       $to = @$portDef['PrivatePort'];
+       $from = @$portDef['PublicPort'];
        $ty = @$portDef['Type'];
        $ret = $ret . "{$ip}:{$from}->{$to}/{$ty} ";
     }
