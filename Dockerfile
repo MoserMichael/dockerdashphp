@@ -34,5 +34,7 @@ RUN ./build/make-shells.sh
 
 #enable mod_ssl
 RUN a2enmod ssl
+#enable ssl tunnel to wss
+RUN a2enmod proxy_wstunnel
 
 CMD /run-apache.sh

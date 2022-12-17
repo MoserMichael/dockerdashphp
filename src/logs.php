@@ -1,6 +1,7 @@
 <html>
 <?php include( __DIR__ . "/static-files/css.css"); ?>
 <script>
+    <?php include( __DIR__ . "/static-files/wssurl.js"); ?>
     <?php include( __DIR__ . "/static-files/sorttable/sort-table.min.js"); ?>
 </script>
 
@@ -164,9 +165,7 @@ function doClose() {
 }
 
 function sendLogRequest(follow_logs, since_time_sec, until_time_sec) {
-    let wsProtocol = location.protocol === 'http:' ? 'ws' : 'wss';
-    let port = parseInt(location.port) + 1;
-    let url = wsProtocol + '://' + location.hostname + ':' + port + '/wsconn.php';
+    let url = makeWssUrl('wsconn.php');
     doClose();
 
     socket = new WebSocket(url);

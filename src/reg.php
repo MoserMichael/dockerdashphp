@@ -69,7 +69,8 @@ show_hdr(3);
 </table>
 
 <script  src="/static-files/utils.js"></script>
-    
+<script  src="/static-files/wssurl.js"></script>
+
 <script>
     var socket;
 
@@ -85,9 +86,7 @@ show_hdr(3);
     }
 
     function onPullImage() {
-        let wsProtocol = location.protocol === 'http:' ? 'ws' : 'wss';
-        let port = parseInt(location.port) + 1;
-        let url = wsProtocol + '://' + location.hostname + ':' + port + '/wsconn.php';
+        let url = makeWssUrl('wsconn.php');
 
         socket = new WebSocket(url);
 

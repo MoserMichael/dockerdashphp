@@ -25,6 +25,7 @@ $id = $_GET['id'];
         <script>var docker_container_id="<?php echo $id;?>";</script>
         <div id="term-container"></div>
         <script>
+            <?php include( __DIR__ . "/static-files/wssurl.js"); ?>
             <?php include( __DIR__ . "/static-files/xterm/lib/xterm.js"); ?>
             <?php include( __DIR__ . "/static-files/xterm/wspty.js"); ?>
             <?php include( __DIR__ . "/static-files/xterm/script.js"); ?>

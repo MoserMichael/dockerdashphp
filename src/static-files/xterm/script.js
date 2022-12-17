@@ -70,9 +70,8 @@ function openTerminal() {
     });
     term.write('Connecting...\r\n');
     
-    var wsProtocol = location.protocol === 'http:' ? 'ws' : 'wss';
-    var port = parseInt(location.port) + 1;
-    var endpoint = wsProtocol + '://' + location.hostname + ':' + port + '/wsconn.php';// + "?id=" + docker_container_id;
+    var endpoint = makeWssUrl('wsconn.php');
+
     client.connect({
         ws: new WebSocket(endpoint),
         onError: function(error) {
