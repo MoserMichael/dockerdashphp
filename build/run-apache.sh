@@ -17,6 +17,8 @@ if [[ "$MODE" == "self-signed" ]]; then
   openssl req -new -x509 -days 256 -nodes -newkey rsa:4096 -out $CERT -keyout $KEY  -subj '/CN='"${HOST}"'/O='"${HOST}"'/C=US/OU=dockerphp'
 
   ln -s /etc/apache2/sites-available/default-ssl.conf /etc/apache2/sites-enabled/.
+else
+  ln -s /etc/apache2/sites-available/default-nossl.conf /etc/apache2/sites-enabled/.
 fi
 
 export APP_ROOT=/var/www/html

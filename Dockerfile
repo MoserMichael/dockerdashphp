@@ -13,7 +13,6 @@ RUN php -r "unlink('composer-setup.php');"
 RUN chown -R www-data:www-data /var/run
 
 
-
 # get git
 RUN apt-get update
 RUN apt-get install git zip curl jq -y
@@ -36,5 +35,9 @@ RUN ./build/make-shells.sh
 RUN a2enmod ssl
 #enable ssl tunnel to wss
 RUN a2enmod proxy_wstunnel
+
+COPY build/apache2.conf /etc/apache2/apache2.conf
+COPY build/default-ssl.conf   /etc/apache2/sites-available/default-ssl.conf
+COPY build/default-nossl.conf /etc/apache2/sites-available/default-nossl.conf
 
 CMD /run-apache.sh

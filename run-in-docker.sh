@@ -1,7 +1,6 @@
 #!/bin/bash
 
 PORT="8000"
-NEXT_PORT="8001"
 INTERNAL_PORT="80"
 HOST=0.0.0.0
 IMAGE_LOCATION=ghcr.io/mosermichael/phpdocker-mm:latest 
@@ -22,7 +21,7 @@ Run docker-web web server in a docker; by default the docker image is fetched fr
 Start the web server
 
 -r          - start the web server
--p  <port>  - listening base port (default ${PORT} - and the next one: ${NEXT_PORT})
+-p  <port>  - listening base port (default ${PORT} )
 -t          - tls with self signed certificate
 
 Stop the web server 
@@ -55,7 +54,6 @@ while getopts "hvdrstp:" opt; do
         MODE_TITLE=https
         INTERNAL_PORT="443"
         #PORT="443"
-        #NEXT_PORT="444"
         #HOST="localhost"
         ;;
     s)
@@ -63,7 +61,6 @@ while getopts "hvdrstp:" opt; do
         ;;
     p)
         PORT="$OPTARG"
-        NEXT_PORT=$((PORT+1))
         ;;
     v)
         set -x
@@ -113,7 +110,7 @@ if [[ $ACTION == 'start' ]]; then
     export DOCKER_API_VERSION="v${D//\"/}"
 
     
-    docker run  -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p $PORT:$INTERNAL_PORT -p $NEXT_PORT:$NEXT_PORT -e MODE="${MODE}" -e HOST="${HOST}" -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} --rm -dt ${IMAGE_LOCATION}
+    docker run  -v $PWD:/mnt/loc -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p $PORT:$INTERNAL_PORT -e MODE="${MODE}" -e HOST="${HOST}" -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} --rm -dt ${IMAGE_LOCATION}
     if [[ $? == 0 ]]; then
         echo "Listen on ${MODE_TITLE}://${HOST}:${PORT}/images.php"
     fi
