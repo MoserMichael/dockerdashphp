@@ -2,15 +2,18 @@
 
 PORT="8000"
 NEXT_PORT="8001"
+INTERNAL_PORT="80"
 HOST=0.0.0.0
 IMAGE_LOCATION=ghcr.io/mosermichael/phpdocker-mm:latest 
+MODE=http
+MODE_TITLE=http
 
 Help() {
 cat <<EOF
 
 Start docker-web in docker
 
-$0 -r [-p <port>] [-i <host>] [-d <dir>] [-v] [-c <image>]
+$0 -r [-p <port>]  [-t] [-v] [-d] [-c <image>]
 
 Stop docker-web in docker
 
@@ -20,6 +23,7 @@ Start the web server
 
 -r          - start the web server
 -p  <port>  - listening base port (default ${PORT} - and the next one: ${NEXT_PORT})
+-t          - tls with self signed certificate
 
 Stop the web server 
 
@@ -38,7 +42,7 @@ exit 1
 SSL="off"
 TRACE=0
 
-while getopts "hvdrsp:c:" opt; do
+while getopts "hvdrstp:" opt; do
   case ${opt} in
     h)
         Help
@@ -46,15 +50,20 @@ while getopts "hvdrsp:c:" opt; do
     r)
         ACTION="start"
         ;;
+    t)
+        MODE=self-signed
+        MODE_TITLE=https
+        INTERNAL_PORT="443"
+        #PORT="443"
+        #NEXT_PORT="444"
+        #HOST="localhost"
+        ;;
     s)
         ACTION="stop"
         ;;
     p)
         PORT="$OPTARG"
         NEXT_PORT=$((PORT+1))
-        ;;
-    c)
-        IMAGE_LOCATION="$OPTARG"
         ;;
     v)
         set -x
@@ -104,8 +113,10 @@ if [[ $ACTION == 'start' ]]; then
     export DOCKER_API_VERSION="v${D//\"/}"
 
     
-    docker run --rm -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p $PORT:80 -p $NEXT_PORT:$NEXT_PORT  -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} -dt ${IMAGE_LOCATION}
-    echo "Listen on http://${HOST}:${PORT}/images.php"
+    docker run  -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p $PORT:$INTERNAL_PORT -p $NEXT_PORT:$NEXT_PORT -e MODE="${MODE}" -e HOST="${HOST}" -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} --rm -dt ${IMAGE_LOCATION}
+    if [[ $? == 0 ]]; then
+        echo "Listen on ${MODE_TITLE}://${HOST}:${PORT}/images.php"
+    fi
 else 
   if [[ $ACTION == 'stop' ]]; then
     DOCKER_ID=$(docker ps | grep ${IMAGE_LOCATION}[[:space:]] | awk '{ print $1 }')

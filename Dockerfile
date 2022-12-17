@@ -32,4 +32,7 @@ RUN php /composer.phar install
 
 RUN ./build/make-shells.sh
 
+#enable mod_ssl
+RUN a2enmod ssl
+
 CMD /run-apache.sh
