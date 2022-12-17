@@ -121,6 +121,7 @@ else
         echo "Docker is already stopped"
         exit 1
     fi
+    echo "stopping docker container: $DOCKER_ID ..."
     docker stop $DOCKER_ID
     docker rm $DOCKER_ID || true
   else
