@@ -114,9 +114,20 @@ function make_api_networks($row_val, $json) : string {
 }
 
 function make_api_mounts($row_val, $json) : string {
+
     $ret = "";
-    foreach($json['Mounts'] as $key => $value) {
-        $ret = $ret . " " . @$value['Source'] . " -> " . @$value['Destination'] . " ";
+    $mounts = $json['Mounts'];
+
+
+    foreach($mounts as $key => $value) {
+        $src = $value['Source'] ?? "";
+
+        // some magic incantations...
+        if ($src == "/run/host-services/docker.proxy.sock") {
+            $src= "/var/run/docker.sock";
+        }
+        $dst = $value['Destination'] ?? "";
+        $ret = $ret . " " . $src . " -> " . $dst;
     }
     return $ret;
 }
