@@ -70,7 +70,7 @@ function openTerminal() {
     });
     term.write('Connecting...\r\n');
     
-    var endpoint = makeWssUrl('wsconn.php');
+    var endpoint = makeWssUrl('ws/wsconn.php');
 
     client.connect({
         ws: new WebSocket(endpoint),

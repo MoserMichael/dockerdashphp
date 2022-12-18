@@ -86,7 +86,7 @@ show_hdr(3);
     }
 
     function onPullImage() {
-        let url = makeWssUrl('wsconn.php');
+        let url = makeWssUrl('ws/wsconn.php');
 
         socket = new WebSocket(url);
 

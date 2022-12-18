@@ -165,7 +165,7 @@ function doClose() {
 }
 
 function sendLogRequest(follow_logs, since_time_sec, until_time_sec) {
-    let url = makeWssUrl('wsconn.php');
+    let url = makeWssUrl('ws/wsconn.php');
     doClose();
 
     socket = new WebSocket(url);

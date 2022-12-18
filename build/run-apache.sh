@@ -19,6 +19,7 @@ if [[ "$MODE" == "self-signed" ]]; then
 else
   ln -s /etc/apache2/sites-available/default-nossl.conf /etc/apache2/sites-enabled/.
 fi
+rm -f /etc/apache2/sites-enabled/000-default.conf
 
 export APP_ROOT=/var/www/html
 php /var/www/wss-src/wssrv.php "${PORT_WSS}" &

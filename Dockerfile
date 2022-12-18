@@ -33,8 +33,14 @@ RUN ./build/make-shells.sh
 
 #enable mod_ssl
 RUN a2enmod ssl
+#enable mod_proxy
+RUN a2enmod proxy
+#enable mod_proxy
+RUN a2enmod proxy_http
 #enable ssl tunnel to wss
 RUN a2enmod proxy_wstunnel
+#enable rewrite module
+RUN a2enmod rewrite
 
 COPY build/apache2.conf /etc/apache2/apache2.conf
 COPY build/default-ssl.conf   /etc/apache2/sites-available/default-ssl.conf
