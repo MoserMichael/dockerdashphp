@@ -2,7 +2,7 @@
 
 set -ex
 
-#git clean -f -d
+git clean -f -d
 
 TMPFILE=$(mktemp -d)
 cp -rf . ${TMPFILE}
