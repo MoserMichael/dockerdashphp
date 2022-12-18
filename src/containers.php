@@ -44,6 +44,9 @@ require_once __DIR__ . "/base/fmttable.php";
 require_once __DIR__ . "/../vendor/autoload.php";
 require_once __DIR__  . "/DockerRest/DockerRest.php";
 
+function make_cnt_inspect_link($id, $title) {
+    return "<a title='inspect container' href='/gen.php?cmd=inspectc&id={$id}'>{$title}</a>";
+}
 
 function make_api_id($row_val, $json) : string {
     $state = $json["State"];
@@ -64,7 +67,8 @@ function make_api_id($row_val, $json) : string {
         $ps = "{$ps}&nbsp;{$diffs}<br/><a href='/attach.php?id={$id}'><b>/Console/</b></a>";
     }
 
-    return "<a title='inspect container' href='/gen.php?cmd=inspectc&id={$id}'>{$id}</a><br/>{$ps}";
+    $inspect = make_cnt_inspect_link($id, $id);
+    return "{$inspect}<br/>{$ps}";
 }
 
 
@@ -82,9 +86,19 @@ function make_api_status($row_val, $json) : string {
     return $json["State"] . " - " . $json["Status"] . "<br/>" . $links;
 }
 
+
 function make_api_names($row_val, $json) : string {
     $names = $json["Names"];
-    return implode(" ", $names);
+    $ret = "";
+
+    foreach($names as $k => $v) {
+        $link = make_cnt_inspect_link($json['Id'] , $v);
+        if ($ret != "") {
+            $ret = " , ";
+        }
+        $ret = $ret . $link;
+    }
+    return $ret;
 }
 
 function make_api_created_at($row_val, $json) : string {
