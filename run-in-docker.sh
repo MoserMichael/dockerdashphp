@@ -3,6 +3,7 @@
 PORT="8000"
 INTERNAL_PORT="80"
 HOST=0.0.0.0
+HOST_BIND=""
 IMAGE_LOCATION=ghcr.io/mosermichael/phpdocker-mm:latest 
 MODE=http
 MODE_TITLE=http
@@ -12,7 +13,7 @@ cat <<EOF
 
 Start docker-web in docker
 
-$0 -r [-p <port>]  [-t] [-v] [-d] [-c <image>]
+$0 -r [-p <port>]  [-t] [-v] [-d] [-c <image>] [ -b <bind address> ]
 
 Stop docker-web in docker
 
@@ -23,7 +24,7 @@ Start the web server
 -r          - start the web server
 -p  <port>  - listening base port (default ${PORT} )
 -t          - tls with self signed certificate
-
+-b <addr>   - bind address (default ${HOST})
 Stop the web server 
 
 -s          - stop the web server
@@ -41,7 +42,7 @@ exit 1
 SSL="off"
 TRACE=0
 
-while getopts "hvdrstp:" opt; do
+while getopts "hvdrstp:b:" opt; do
   case ${opt} in
     h)
         Help
@@ -49,12 +50,14 @@ while getopts "hvdrstp:" opt; do
     r)
         ACTION="start"
         ;;
+    b)
+        HOST="$OPTARG"
+        HOST_BIND="${OPTARG}:"
+        ;;
     t)
         MODE=self-signed
         MODE_TITLE=https
         INTERNAL_PORT="443"
-        #PORT="443"
-        #HOST="localhost"
         ;;
     s)
         ACTION="stop"
@@ -110,7 +113,7 @@ if [[ $ACTION == 'start' ]]; then
     export DOCKER_API_VERSION="v${D//\"/}"
 
     
-    docker run  -v $PWD:/mnt/loc -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p $PORT:$INTERNAL_PORT -e MODE="${MODE}" -e HOST="${HOST}" -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} --rm -dt ${IMAGE_LOCATION}
+    docker run  -v $PWD:/mnt/loc -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p ${HOST_BIND}${PORT}:${INTERNAL_PORT} -e MODE="${MODE}" -e HOST="${HOST}" -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} --rm -dt ${IMAGE_LOCATION}
     if [[ $? == 0 ]]; then
         echo "Listen on ${MODE_TITLE}://${HOST}:${PORT}/images.php"
     fi
