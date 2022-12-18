@@ -6,7 +6,7 @@ You can also attach and run a shell inside a running container, and all of the U
 
 The server runs on OSX, Linux and on Windows with the Linux subsystem
 
-## Running the server in a docker
+## Running the server in a docker container
 
 - Download the following bash script ```curl https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh >run-in-docker.sh``` (or via link [run-in-docker.sh](https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh) )
 - ```chmod +x ./run-in-docker.sh```
@@ -27,7 +27,7 @@ Use of TLS with a self signed certificate means that all of the communication is
 
 - run ```./run-in-docker.sh -s```
 
-### Building & Running locally 
+## Building & Running locally 
 
 How to use this stuff, after cloning this repository:
 
