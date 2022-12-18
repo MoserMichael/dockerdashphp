@@ -1,12 +1,12 @@
-# Web app for working with docker
+# docker dashboard / web application
 
-This program runs a small web application that allows to run docker commands.
-It displays the running containers and existing images in a table, allows to inspect entries and view container logs & errors.
-You can also attach and run a shell inside a running container, the shell will run in the browser window!.
+This program provides a browser based UI for working with a local docker installation. For this you will need to start a web server, that runs on the same machine as the docker engine.
+The UI displays the running containers and existing images in a table, allows to inspect entries and view container logs & errors.
+You can also attach and run a shell inside a running container, the shell will run in the browser window, as well as many other things.
 
-_Warning: currently the tool runs in http raw, no TLS_
+The server runs on OSX and Linux and on Windows with the Linux subsystem
 
-## Running it in a docker
+## Running the server in a docker
 
 - Download the following bash script ```curl https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh >run-in-docker.sh``` (or via link [run-in-docker.sh](https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh) )
 - ```chmod +x ./run-in-docker.sh```
