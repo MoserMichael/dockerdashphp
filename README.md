@@ -1,7 +1,4 @@
-
-# Warning, work in progress!!!
-
-## Web app for working with docker
+# Web app for working with docker
 
 This program runs a small web application that allows to run docker commands.
 It displays the running containers and existing images in a table, allows to inspect entries and view container logs & errors.
@@ -9,12 +6,20 @@ You can also attach and run a shell inside a running container, the shell will r
 
 _Warning: currently the tool runs in http raw, no TLS_
 
-### Running it in a docker
+## Running it in a docker
 
 - Download the following bash script ```curl https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh >run-in-docker.sh``` (or via link [run-in-docker.sh](https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh) )
 - ```chmod +x ./run-in-docker.sh```
+
+### Running the server with TLS / with a self signed certificate
+
 - ```./run-in-docker.sh -r -p 9000``` This starts the local web server for this tool in the docker and uses ports 9000 and 9001
-- On the same machine: use your browser and navigate to http://localhost:9000/images.php
+- Use your browser and navigate to https://localhost:9000/images.php . The browser will display a warning on the self signed certificate, and you will have to click 'Proceed'.
+
+### Running the server with plain http
+
+- ```./run-in-docker.sh -r -p 9000``` This starts the local web server for this tool in the docker and uses ports 9000 and 9001
+- Use your browser and navigate to http://localhost:9000/images.php
 
 To stop the server
 
