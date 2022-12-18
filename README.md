@@ -1,10 +1,10 @@
 # docker dashboard / web application
 
 This program provides a browser based UI for working with a local docker installation. For this you will need to start a web server, that runs on the same machine as the docker engine.
-The UI displays the running containers and existing images in a table, allows to inspect entries and view container logs & errors.
-You can also attach and run a shell inside a running container, the shell will run in the browser window, as well as many other things.
+The UI displays the running containers and existing images in a table, allows to inspect entries and view container logs & errors, as well as many other things. 
+You can also attach and run a shell inside a running container, and all of the UI is running in a browser window.
 
-The server runs on OSX and Linux and on Windows with the Linux subsystem
+The server runs on OSX, Linux and on Windows with the Linux subsystem
 
 ## Running the server in a docker
 
