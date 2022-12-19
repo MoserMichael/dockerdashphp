@@ -24,20 +24,22 @@ if ($pos === false) {
 $data = file_get_contents($url);
 
 $page_int = intval($page);
+$link_navigate="";
 if ($page_int > 1) {
     $prev_prev = $page_int - 1;
-    echo "<a href='/searchresdetails.php?arg={$term}&page={$prev_prev}'>&lt;&lt;&lt;</a>&nbsp;&nbsp;&nbsp;";
+    $link_navigate.="<a href='/searchresdetails.php?arg={$term}&page={$prev_prev}'>&lt;&lt;&lt;</a>&nbsp;&nbsp;&nbsp;";
 }
 
-echo "Page {$page_int}&nbsp;";
+$link_navigate.="Page {$page_int}&nbsp;&nbsp;&nbsp;";
 
 $arr = json_decode($data, true);
 $next = $arr['next'] ?? "";
 
 if ($next != "") {
     $next_int = $page_int + 1;
-    echo "<a href='/searchresdetails.php?arg={$term}&page={$next_int}'>&gt;&gt;&gt;</a><br/>";
+    $link_navigate.="<a href='/searchresdetails.php?arg={$term}&page={$next_int}'>&gt;&gt;&gt;</a><br/>";
 }
+echo "{$link_navigate}";
 
 ?>
 <h3>List all tags for a given search result</h3>
@@ -112,3 +114,6 @@ $tbl = new base\FmtTable(array(
 ));
 
 echo $tbl->format($all_results);
+
+echo "<p/>";
+echo "{$link_navigate}";

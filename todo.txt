@@ -5,7 +5,12 @@ TODO:
 - create container screen
     add option to attach volumes
 
-- the way that i force ratchet to flush the write stream sucks. (but i don't know better). /will need that for TLS support/
+- the way that i force ratchet to flush the write stream sucks. (but i don't know better). 
+
+- ratchet: 'Closed without sending a request; it was probably just an unused speculative preconnection'
+    - for logs: helps to add the time - 10m (url differs each time)
+    
+DONE:
 
 - must have some form of TLS
     - container: must do TLS. Look how to run the show with apache.
@@ -15,14 +20,6 @@ TODO:
                 COPY src/ /var/www/html/
 
                 docker run -d -p 80:80 --name my-apache-php-app -v "$PWD":/var/www/html php:7.2-apache
-
-    - ratchet: how to websocket server over SSL?
-        - https://github.com/ratchetphp/Ratchet/issues/609
-
-- ratchet: 'Closed without sending a request; it was probably just an unused speculative preconnection'
-    - for logs: helps to add the time - 10m (url differs each time)
-    
-DONE:
 
 --- docker create options
 
