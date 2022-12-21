@@ -115,7 +115,7 @@ class DockerCommonBinaryStreamCtx implements DockerBinaryStreamHandler {
         $f = new \Ratchet\RFC6455\Messaging\Frame($json_data);
 
         stream_set_blocking($this->streamy, true); 
-        $ret = @fwrite($this->streamy, $f->getContents());
+        $ret = fwrite($this->streamy, $f->getContents()) ?? false;
         stream_set_blocking($this->streamy, false);
         
         if ($ret === false) {

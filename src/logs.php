@@ -14,12 +14,12 @@ require_once __DIR__ . "/base/runner.php";
 require_once __DIR__ . "/base/fmttable.php";
 
 $id = escapeshellarg($_GET['id']);
-$since = @$_GET['since'];
-$until = @$_GET['until'];
+$since = $_GET['since'] ?? "";
+$until = $_GET['until'] ?? "";
 
 $follow_logs=false;
 if (array_key_exists('follow',$_GET)) {
-    $follow_logs=@$_GET['follow'];
+    $follow_logs=$_GET['follow'] ? false;
 }
 if ($follow_logs == "true") {
     $follow_logs_checked = "checked";

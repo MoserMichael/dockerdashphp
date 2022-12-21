@@ -147,7 +147,7 @@ class HttpHandler {
                 $requestText = substr($requestText, $sendOffset);
             }
             $toSend = $len - $sendOffset;
-            $ret = @fwrite($this->sock, $requestText, $toSend);
+            $ret = fwrite($this->sock, $requestText, $toSend) ?? false;
 
             if (self::$TRACE) {
                 fwrite(STDERR, "sending offset: {$sendOffset} Len: {$toSend}/{$len}\n");

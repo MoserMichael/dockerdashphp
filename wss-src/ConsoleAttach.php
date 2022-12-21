@@ -185,8 +185,8 @@ class DockerConsoleBinaryStreamCtx implements DockerBinaryStreamHandler {
         $json = $this->getImageJson($containerId, $api);
         if ($json != null) {
             // do we have such a shell here?
-            $os = @$json['Os'];
-            $arch = @$json['Architecture'];
+            $os = $json['Os'] ?? "";
+            $arch = $json['Architecture'] ?? "";
 
             if ($arch == "amd64") {
                 $arch = "x86_64";

@@ -66,5 +66,6 @@ $tbl = new base\FmtTable(array(
 
 $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
 
-echo $tbl->format(@$json['Volumes']);
+$volumes = $json['Volumes'] ?? ""; 
+echo $tbl->format($volumes);
 

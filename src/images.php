@@ -45,7 +45,7 @@ function make_api_id($row_val,$json) : string {
     $id = $json["Id"];
     $row_val = substr($id, strlen("sha256:"), 12);
     $image = $row_val;
-    $name = @$json["RepoTags"][0];
+    $name = $json["RepoTags"][0] ?? "";
 
     $rmi="<a href='/gen.php?cmd=rmi&id={$row_val}'>/remove image/</a>";
     $history="<a href='/imageHistory.php?id={$row_val}'>/History/</a>";

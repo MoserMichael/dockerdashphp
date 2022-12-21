@@ -35,7 +35,8 @@ if (!$ok) {
     $error = "";
     if ($jsonRaw != "") {
         $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
-        $error = @$json['message'] . " " . $error;
+        $message = $json['message'] ?? ""; 
+        $error = $message . " " . $error;
     }
     echo "<br/><h3>Search failed.</h3>{$error}";
     return;

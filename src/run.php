@@ -11,7 +11,8 @@ require_once __DIR__  . "/DockerRest/DockerRest.php";
 show_hdr(-1);
 
 $image = escapeshellcmd($_GET['ID']);
-$name = escapeshellcmd(@$_GET['name']);
+$name = $_GET['name'] ?? ""; 
+$name = escapeshellcmd($name);
 $displayName = $name;
 if ($displayName=="") {
     $displayName = $image;

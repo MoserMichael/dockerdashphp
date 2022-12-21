@@ -19,7 +19,7 @@ $pos = strpos($term, "/");
 if ($pos === false) {
     $url = "https://registry.hub.docker.com/v2/repositories/library/{$term}/tags/?page={$page}";
 } else {
-    $url = "https://registry.hub.docker.com/v2/repositories/{$term}/tags/?page={$page}";
+        $url = "https://registry.hub.docker.com/v2/repositories/{$term}/tags/?page={$page}";
 }
 $data = file_get_contents($url);
 

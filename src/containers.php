@@ -110,7 +110,7 @@ function make_size($row_val, $json) : string {
 }
 
 function make_api_networks($row_val, $json) : string {
-    $obj = @$json['NetworkSettings']['Networks'];
+    $obj = $json['NetworkSettings']['Networks'] ?? null;
 
     $ret = "";
     foreach($obj as $key => $value) {
@@ -118,10 +118,10 @@ function make_api_networks($row_val, $json) : string {
     }
 
     foreach($json["Ports"] as $portDef) {
-       $ip = @$portDef['IP'];
-       $to = @$portDef['PrivatePort'];
-       $from = @$portDef['PublicPort'];
-       $ty = @$portDef['Type'];
+       $ip = $portDef['IP'] ?? "";
+       $to = $portDef['PrivatePort'] ?? "";
+       $from = $portDef['PublicPort'] ?? "";
+       $ty = $portDef['Type'] ?? "";
        $ret = $ret . "{$ip}:{$from}->{$to}/{$ty} ";
     }
     return $ret;
@@ -160,8 +160,8 @@ function make_api_image($row_val, $json) : string {
     if ($status) {
         $arr = json_decode($body, JSON_OBJECT_AS_ARRAY);
         if ($arr != null) {
-            $tags = @$arr['RepoTags'];
-            if ($tags != 0) {
+            $tags = $arr['RepoTags'] ?? null;
+            if ($tags != null) {
                 $tagNames = join(",", $tags);
                 $link = "<a title='inspect image' href='/gen.php?cmd=inspecti&id={$hash}'>{$tagNames}</a>";
             }

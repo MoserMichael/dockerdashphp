@@ -23,4 +23,9 @@ rm -f /etc/apache2/sites-enabled/000-default.conf
 
 export APP_ROOT=/var/www/html
 php /var/www/wss-src/wssrv.php "${PORT_WSS}" &
+WSS_PID=$!
+
+trap "trap - SIGTERM; kill -9 ${WSS_PID}; apachectl -k stop || true; kill -9 0; exit 0" SIGINT SIGTERM EXIT
+
+
 apache2-foreground
