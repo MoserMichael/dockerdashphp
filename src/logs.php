@@ -19,7 +19,7 @@ $until = $_GET['until'] ?? "";
 
 $follow_logs=false;
 if (array_key_exists('follow',$_GET)) {
-    $follow_logs=$_GET['follow'] ? false;
+    $follow_logs=$_GET['follow'] ?? false;
 }
 if ($follow_logs == "true") {
     $follow_logs_checked = "checked";
