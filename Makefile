@@ -26,8 +26,7 @@ download-shells:
 	./build/make-shells.sh  
 
 container-build:
+	git clean -f -d
 	./build/container-build.sh 2>&1 | tee container-build.log 
 
-container-push:
-	./build/container-push.sh ghcr.io/mosermichael/phpdocker-mm latest
 
