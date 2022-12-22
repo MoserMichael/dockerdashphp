@@ -69,7 +69,7 @@ function make_os($row_val, $json) : string {
     $os_features = $json["os_features"] ?? "";
     $os_version = $json["os_version"] ?? "";
 
-    return "${os} {$os_version} {$os_features}";
+    return "{$os} {$os_version} {$os_features}";
 }
 
 function make_size($row_val, $json) : string {

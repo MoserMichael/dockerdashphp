@@ -213,13 +213,13 @@ class DockerEngineApi extends HttpHandler {
     public function inspectContainer(string $id)
     {
         $ver = self::$dockerApiVersion;
-        $url = "/{$ver}/containers/${id}/json";
+        $url = "/{$ver}/containers/{$id}/json";
         return $this->sendCommonRequest($url, null, 200, self::MethodGet);
     }
 
     public function inspectImage(string $id) {
         $ver = self::$dockerApiVersion;
-        $url = "/{$ver}/images/${id}/json";
+        $url = "/{$ver}/images/{$id}/json";
         return $this->sendCommonRequest($url, null, 200, self::MethodGet);
     }
 

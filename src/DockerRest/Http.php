@@ -190,7 +190,7 @@ class HttpHandler {
 
                 if (self::$TRACE) {
                     $has_response = $ret !== null;
-                    fwrite(STDERR, "Response-hdr ${has_response}\n============\n{$msg}\n");
+                    fwrite(STDERR, "Response-hdr {$has_response}\n============\n{$msg}\n");
                 }
 
                 $this->buffer = substr($this->buffer, $pos + strlen(self::EOF_HDR));

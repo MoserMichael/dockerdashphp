@@ -15,7 +15,7 @@ function runAndReturnPipes(string $cmd) : array {
     // "docker exec -ti {$id} /bin/sh"
     $res = proc_open($cmd , $descriptorSpec, $pipes);
     if ($res === false || !is_resource($res)) {
-        echo "Error: Can't run ${cmd}";
+        echo "Error: Can't run {$cmd}";
         exit(0);
     }
     return array($res,$pipes);

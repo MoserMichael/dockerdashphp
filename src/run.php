@@ -179,7 +179,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
     function makeRequest() {
         let request = {};
 
-        request['Image'] = "<?php echo "${image}"?>";
+        request['Image'] = "<?php echo "{$image}"?>";
 
         let opt = document.getElementById('cmd_type');
         let opt_val = opt.options[opt.selectedIndex].value;

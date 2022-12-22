@@ -93,6 +93,6 @@ final class DockerStreamTest extends TestCase
 
         fclose($sock);
 
-        exec("docker kill ${dockerId}");
+        exec("docker kill {$dockerId}");
     }
 }
