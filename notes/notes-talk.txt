@@ -1,0 +1,193 @@
+
+I want to show you my docker dashboard. It allows you to work with your local docker installation in a browser.
+
+Let's download the runner script:
+
+    curl https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh >run-in-docker.sh    
+
+Let's make this script runnable. 
+
+    chmod +x ./run-in-docker.sh
+
+Now run the script to start the WEB server for the docker dashboard.
+
+    ./run-in-docker.sh -r -p 9000
+
+First the docker image of the tool is being pulled and then the docker container that hosts the dashboards web server is being started.
+
+This approach has it's limitation - for example you can't use the dashboard to restart the docker engine, as this would kill the container instance that is hosting the web server for the dashbaord.  However there this approach does has a big advantage - the docker image comes with all of the required software tools and packages.
+
+Now the container has been started and the web server is listening on port 9000.
+
+You can see so with the $(docker ps) command - that one is listing all running containers
+
+    docker ps
+
+    CONTAINER ID   IMAGE                                      COMMAND                  CREATED             STATUS             PORTS                  NAMES
+    d4d884940a13   ghcr.io/mosermichael/phpdocker-mm:latest   "docker-php-entrypoi…"   About an hour ago   Up About an hour   0.0.0.0:9000->80/tcp   docker-php-admin
+
+Lets look at the url in the web browser:
+
+    http://0.0.0.0:9000/images.php
+
+First thing you see is a list of locally installed docker images
+
+You can inspect the details of a docker image either by following the link with the image id or on the link with image tag name
+
+    http://0.0.0.0:9000/gen.php?cmd=inspecti&id=ghcr.io/mosermichael/s9k-mm:latest
+
+This gives you the lower level details for the given image.
+
+- The Config tag shows you the Entry point 
+    - that's the command that is run by default when the image is used. 
+    - The environment variables set for running the entry point.
+- Other important fields are the operating system of the image, the processor architecture that is required to run this image,
+- This image has been built for both the Intel 64 processor architecture and the arm64 architecture used by the M1 processor and .
+  Here  we are running on a M1 processor so that's the version that has been pulled when we started the server.
+
+Back to the list of images
+    
+    http://0.0.0.0:9000/images.php
+
+For each image you have the /History/ link, this shows you the sequence of commands that were used to build that image.
+
+    http://0.0.0.0:9000/imageHistory.php?id=a1a76be1abae
+
+An image is typically build by executing the sequence of commands defined in a Dockerfile, here you can follow up on these commands.
+Each of these command is changing the docker image by adding a new layer in the image. Later this image will be used by a docker container, at this moment the image is mounted by the containers file system. If a file on the container is accessed then these layers are searched in reverse order - at first it tries to look up the file in the latest layer, if it is not foud then it tries to find the file in the next oldest layer, and so on. 
+
+Let's search for an image on Docker hub - in the Pull/Search screen
+
+    http://0.0.0.0:9000/reg.php
+
+    (Search for fedora)
+
+http://0.0.0.0:9000/searchres.php?cmd=search&id=fedora
+
+    This table is listing all of the matching docker images, 
+    This gives you all the results that $(docker search fedora) would give you. 
+    Now here we have an additional link with each search result
+
+http://0.0.0.0:9000/searchresdetails.php?arg=fedora
+
+    This screen lists all the tags for an image that appears in the search results. A particular image is always described by the combination of the image name and a tag; there may be multiple tags, each describing a different build of the image. Here you see some additional information - the fedora image is alway built for the linux operating system (naturally), but each tag can be built for multiple processor architectures, amd64 - is 64 bit the Intel x86_64 architecture, there is also arm64 - this is the processor architector of the Apple M1 chip.
+
+    You can follow up on the older tags - right now older tags like version 23 to 20 are only build for the 64 bit intel processor (amd64) 
+
+Let's pull the latest fedora image from docker hub
+    
+    http://0.0.0.0:9000/reg.php
+
+    (filling in fedora and latest under "Pulling docker image" and pressing Pull)
+
+You can see a progress indicication here, as the image is being pulled.
+
+Now lets look at the current list of local images 
+
+    http://0.0.0.0:9000/images.php
+
+The Fedora image has just been pulled, and is now listed as a local image.
+
+Let's press at the 'Create Container' link near the 'fedora image'
+
+We will run the container in "detached mode" - meaning that it will run in the background, as a daemon process.
+
+This screen allows us to create a fedora instance with a command to keep busy
+    
+    Command:  "/bin/sleep infinity"
+
+This command just sleeps from now to eternity - it just keeps the container from exiting.
+
+Lets mount my home directory into the file system of the container
+
+    Mounted Volumes: /Users/mmoser:/mnt/home
+
+Assigning a container name is optional, it makes sure that on this system there is just one container with the same name, you can't create two containers with the same name.
+
+    Name: myenv
+
+Let's create the container
+    
+    pressing on "Start"
+
+Let's now look at the list of running containers:
+
+    http://0.0.0.0:9000/containers.php
+
+It is possible to get a terminal that runs within the interactive container! Let's follow the /Console/ link
+
+    <in the console>
+
+    bash
+
+    cat /etc/os-release
+
+We are running on Linux, on a Debian based distribution.
+
+You can see the running processes
+
+    ps -elf
+
+Actually we have another running container here - with the image no_sh:latest you can't just attach a terminal to it, as it doesn't have a shell installed in the image.
+
+Let's try in a terminal 
+
+    docker ps 
+
+    CONTAINER ID   IMAGE                                      COMMAND                  CREATED       STATUS       PORTS                  NAMES
+    d4d884940a13   ghcr.io/mosermichael/phpdocker-mm:latest   "docker-php-entrypoi…"   5 hours ago   Up 5 hours   0.0.0.0:9000->80/tcp   docker-php-admin
+    cdec7ccf5c57   no_sh:latest                               "/bin/sleep infinity…"   7 hours ago   Up 7 hours                          wizardly_morse
+
+    docker exec -it cdec7ccf5c57 /bin/sh
+    OCI runtime exec failed: exec failed: unable to start container process: exec: "/bin/sh": stat /bin/sh: no such file or directory: unknown
+
+Now in the web application you still can attach a terminal to that same docker container!
+
+    http://0.0.0.0:9000/containers.php
+
+That's because the dashboard is going an extra mile: if we failed to attach a terminal with the shell, then it copies a precompiled shell binary onto the container. The next attempt to attach a shell will now succeed!
+
+Let's look at the list of running containers 
+
+    http://0.0.0.0:9000/containers.php
+
+The link /diffs/ shows all of the changes on the file system of the containe and how it changed: if it was added, modified or deleted.
+
+    http://0.0.0.0:9000/containerDiff.php?id=cdec7ccf5c57
+
+As you see, the file /bin/bash was added (as well as /bin/sh - a symlink to /bin/bash)
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+============
+
+docker ps
+
+CONTAINER ID   IMAGE                                      COMMAND                  CREATED       STATUS       PORTS                  NAMES
+81b4c38dc285   ghcr.io/mosermichael/phpdocker-mm:latest   "docker-php-entrypoi…"   4 hours ago   Up 4 hours   0.0.0.0:8000->80/tcp   docker-php-admin
+
+that's the same 
+
+curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/json | jq . 
+[{"Id":"81b4c38dc285c1971fc6dd50809dde70e04e681de8546615ed28a3a96d8ffede","Names":["/docker-php-admin"],"Image":"ghcr.io/mosermichael/phpdocker-mm:latest","ImageID":"sha256:78c832e7a63b210f5aee8da4226a3e8c5affe60f4130d1f4f7e01626895bdbdb","Command":"docker-php-entrypoint /bin/sh -c /run-apache.sh","Created":1671711785,"Ports":[{"IP":"0.0.0.0","PrivatePort":80,"PublicPort":8000,"Type":"tcp"}],"Labels":{"desktop.docker.io/binds/0/Source":"/var/run/docker.sock","desktop.docker.io/binds/0/SourceKind":"dockerSocketProxied","desktop.docker.io/binds/0/Target":"/var/run/docker.sock"},"State":"running","Status":"Up 4 hours","HostConfig":{"NetworkMode":"default"},"NetworkSettings":{"Networks":{"bridge":{"IPAMConfig":null,"Links":null,"Aliases":null,"NetworkID":"e801789a3104ae253e67c175889d4c7a782257a63d3008f147aa1e32f6c36ae4","EndpointID":"b824842ba57c262a9b1191829ec80798e7b5bbb5c3093a5ed47d350fd9faf586","Gateway":"172.17.0.1","IPAddress":"172.17.0.2","IPPrefixLen":16,"IPv6Gateway":"","GlobalIPv6Address":"","GlobalIPv6PrefixLen":0,"MacAddress":"02:42:ac:11:00:02","DriverOpts":null}}},"Mounts":[{"Type":"bind","Source":"/run/host-services/docker.proxy.sock","Destination":"/var/run/docker.sock","Mode":"","RW":true,"Propagation":"rprivate"}]}]
+
+
+sudo lsof -U | grep docker
+launchd       1                   root   45u  unix 0xaeb1cfc9c8e9adbd      0t0      /var/run/com.docker.vmnetd.sock
+com.docke   345                   root    4u  unix 0xaeb1cfc9c8e9adbd      0t0      /var/run/com.docker.vmnetd.sock
+
+
+curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/json | jq . ;  sudo lsof -U | grep docker
+

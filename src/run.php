@@ -121,7 +121,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
 
     function parsePortDef(portDef) {
         let ret = {};
-        let res = runParser(portDef, makePortDefParser(),  "Port mappings");
+        let res = runParser(portDef,   makePortDefParser(),  "Port mappings");
         let i = 0;
         for(i=0; i< res.length; ++i) {
             let def = res[i];
@@ -152,16 +152,30 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         cmd = document.getElementById("heatth_check_type");
         let value = cmd.options[cmd.selectedIndex].value;
         request['HealthConfig']['Test'] = [ value, ...parsed_cmd_line ];
+        /*
         request['HealthConfig']['Interval'] = parseMemSize('healthcheck_interval');
         request['HealthConfig']['Timeout'] = parseMemSize('healthcheck_timeout');
         request['HealthConfig']['Retries'] = parseMemSize('healthcheck_retries');
         request['HealthConfig']['StartPeriod'] = parseMemSize('healthcheck_start_period');
+         */
+    }
+
+    function makePortMapping() {
+        let portDef = document.getElementById('ports').value;
+        if (portDef.trim() == "") {
+            return null;
+        }
+        console.log("ports: >" + portDef + "<");
+        return parsePortDef(portDef);
     }
 
     function makeVolumeMapping() {
-        let parser = makeVolumeMappingParser();
-        let text = document.getElementById('');
-        runParser(text, makePortDefParser(), "Mounted Volumes");
+        let text = document.getElementById('volumes').value;
+        if (text.trim() == "") {
+            return null;
+        }
+        console.log("volumes: " + text);
+        runParser(text, makeVolumeMappingParser(), "Mounted Volumes");
         return text.trim().split(' ');
     }
 
@@ -171,9 +185,26 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             return;
         }
 
-        let portDef = document.getElementById('ports').value;
-        request['HostConfig']['PortBindings'] = parsePortDef(portDef);
-        request['HostConfig']['Binds'] = makeVolumeMapping();
+        let mapping = makePortMapping();
+        if (mapping != null) {
+            request['HostConfig']['PortBindings'] = mapping;
+        }
+        mapping = makeVolumeMapping();
+        if (mapping != null) {
+            request['HostConfig']['Binds'] = mapping;
+        }
+
+        let txt = parseMemSize('memory');
+        if (txt != null) {
+            request['HostConfig']['Memory'] = txt
+        }
+        txt = parseMemSize('swapped');
+        if (txt != null) {
+            request['HostConfig']['MemorySwap'] = txt;
+        }
+        if (txt != null) {
+            request['HostConfig']['MemoryReservation'] = txt;
+        }
     }
 
     function makeRequest() {
@@ -226,7 +257,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
 
         let container_name = document.getElementById('name').value.trim();
         if (container_name != "") {
-            container_name = urlencode(container_name);
+            container_name = encodeURIComponent(container_name);
         }
 
         xmlHttp.onreadystatechange = function() {
@@ -237,8 +268,13 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
             }
         };
 
-        console.log("sending...");
-        xmlHttp.open( "POST", "/createAndRun.php?id=" + image_id , false );
+        let url = "/createAndRun.php?id=" + image_id;
+        if (container_name != "") {
+            url += '&name=' + encodeURIComponent(container_name);
+        }
+
+        console.log("sending: " + url);
+        xmlHttp.open( "POST", url, false );
         xmlHttp.send(json_pretty);
 
     }
@@ -473,19 +509,19 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
                     Max. Memory
                 </td>
                 <td style="width: 0">
-                    <input name="ports" id="ports" size="10" type="input"/>
+                    <input name="memory" id="memory" size="10" type="input"/>
                 </td>
                 <td style="width: 0">
                     Max. Memory Swapped
                 </td>
                 <td style="width: 0">
-                    <input name="ports" id="ports" size="10" type="input"/>
+                    <input name="swapped" id="swapped" size="10" type="input"/>
                 </td>
                 <td style="width: 0">
                     Max. Memory Reserved
                 </td>
                 <td style="width: 0">
-                    <input name="ports" id="ports" size="10" type="input"/>
+                    <input name="reserved" id="reserved" size="10" type="input"/>
                 </td>
             </tr>
         </table>

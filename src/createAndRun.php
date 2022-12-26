@@ -3,13 +3,22 @@
 require_once __DIR__ . "/../vendor/autoload.php";
 require_once __DIR__  . "/DockerRest/DockerRest.php";
 
+
 $image_id = $_GET['id'] ?? "";
+$image_id = urldecode($image_id);
+
+$image_name = $_GET['name'] ?? "";
+$image_name = urldecode($image_name);
+
+
+fwrite(STDERR,"image_id: {$image_id} image_name: {$image_name}\n");
+
 $json = file_get_contents('php://input');
 
 $api = new DockerRest\DockerEngineApi();
 $stat = true;
 
-list ($res, $body) = $api->containerCreate($json);
+list ($res, $body) = $api->containerCreate($image_name, $json);
 if ($res) {
     $create_resp = json_decode($body,JSON_OBJECT_AS_ARRAY);
 

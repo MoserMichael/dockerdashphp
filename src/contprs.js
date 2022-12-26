@@ -92,11 +92,11 @@ function makePortDefParser() {
 
 function makeVolumeMappingParser() {
 
-    let path_parser = makeRegexParser(/^(\\[^;$`*?]|[^\ \;\&\#\|\<\>\`\$\*\(\)\'\"\{\}\?])+/);
+    let path_parser = makeRegexParser(/^(\\[^;$`*?]|[^\ \;\&\#\|\<\>\`\$\*\(\)\'\"\{\}\?\:])+/);
     return makeRepetitionParser(
         makeSequenceParser([
             path_parser,
-            makeTokenParser("="),
+            makeTokenParser(":"),
             path_parser
         ], "volume mapping")
     ,0, -1, "volume mappigns");    

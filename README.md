@@ -14,14 +14,14 @@ The server runs on OSX, Linux and on Windows with the Linux subsystem
 ### Running the server with TLS / with a self signed certificate
 
 - ```./run-in-docker.sh -r -t -p 9000``` This starts the local web server for this tool in the docker and uses ports 9000 
-- Use your browser and navigate to https://localhost:9000/images.php . The browser will display a warning on the self signed certificate, and you should click on the 'Advanced Settings' link and then click on the link named 'Proceed/Accept the risks'.
+- Use your browser and navigate to ```https://localhost:9000/images.php```  The browser will display a warning on the self signed certificate, and you should click on the 'Advanced Settings' link and then click on the link named 'Proceed/Accept the risks'.
 
 Use of TLS with a self signed certificate means that all of the communication is encrypted, however someone may still have impersonated the server over the network (which is an acceptable risk, when working over a trusted local network)
 
 ### Running the server with plain http
 
 - ```./run-in-docker.sh -r -p 9000``` This starts the local web server for this tool in the docker and uses ports 9000 
-- Use your browser and navigate to http://localhost:9000/images.php
+- Use your browser and navigate to ```http://localhost:9000/images.php```
 
 ### To stop the server
 
