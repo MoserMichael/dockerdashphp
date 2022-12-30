@@ -114,7 +114,7 @@ if [[ $ACTION == 'start' ]]; then
 
     docker run -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p ${HOST_BIND}${PORT}:${INTERNAL_PORT} -e MODE="${MODE}" -e HOST="${HOST}" -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} --rm -dt ${IMAGE_LOCATION}
     if [[ $? == 0 ]]; then
-        echo "Listen on ${MODE_TITLE}://${HOST}:${PORT}/images.php"
+        echo "Listen on ${MODE_TITLE}://${HOST}:${PORT}"
     fi
 else 
   if [[ $ACTION == 'stop' ]]; then
