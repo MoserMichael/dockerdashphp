@@ -293,3 +293,6 @@ pstree 1360
  \--- 01382 mmoser com.docker.dev-envs
 ``` 
 
+The main docker daemon is spawning a  qemu-system-aarch64 process for the docker container that has been started. 
+qemu-system-aarch64 is an emulator for the ARM architecture on OSX, https://www.qemu.org/docs/master/system/target-arm.html
+The Linux OS of the docker container needs to be emulated on a OSX host. For linux running on linux there is a more lightweight mechanism for running containers. The Linux OS has the OS primitive of CGROUPS - these allow you to run the user processes of the container in isolation from the user processes of the host operating system. Both the container and the Linux host OS still share the same running kernel, however the process ids and all file descriptors of the container are not visible to the host operating system, by virtue of the CGROUP abstraction.
