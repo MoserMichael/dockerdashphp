@@ -58,8 +58,11 @@ function make_name($row_val, $json) : string {
 }
 
 function make_digest($row_val, $json) : string {
-    if (str_starts_with($row_val, "sha256:")) {
-        return substr($row_val, strlen("sha256:"), 12);
+    #if (str_starts_with($row_val, "sha256:")) {
+    #    return substr($row_val, strlen("sha256:"), 12);
+    #}
+    if ($row_val != null) {
+        $row_val = "<code>{$row_val}</code>";
     }
     return $row_val ?? "";
 }
