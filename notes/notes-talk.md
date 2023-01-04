@@ -75,6 +75,13 @@ http://0.0.0.0:9000/searchresdetails.php?arg=fedora
 
     You can follow up on the older tags - right now older tags like version 23 to 20 are only build for the 64 bit intel processor (amd64) 
 
+    Also: images for a given tag may get a retroactive update, in this case the sha of the image will change.
+    However you can try to try to require a given exact image by refering to it's sha.
+    A Dockerfile can specify the image name, image tag and sha checksum - that will ignore all future retroactive updates for the image.
+
+FROM  fedora:38@sha256:ed0bafb5fc0ef5128ebe28c3d4bfbab2770913afd791d1f5b413d7b20b586ff6
+    
+
 Let's pull the latest fedora image from docker hub
     
     http://0.0.0.0:9000/reg.php
