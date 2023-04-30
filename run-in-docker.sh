@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env /bin/bash
 
 PORT="8000"
 INTERNAL_PORT="80"
@@ -104,15 +104,32 @@ check_docker_engine_running() {
     fi
 }
 
+clean_if_stopped() {
+    STATE=$(docker ps -a --filter 'label=docker-php-admin'  --format='{{.State}}')
+    if [[ $STATE == "running" ]]; then
+        echo "server is already running"
+        exit 1
+    fi
+    if [[ $STATE != "" ]]; then
+        # force stop and clean up
+        ID=$(docker ps -a --filter 'label=docker-php-admin'  --format='{{.ID}}')
+        if [[ $ID != "" ]]; then 
+            docker kill "$ID"
+            docker container prune -f --filter 'label=docker-php-admin' 
+        fi
+    fi
+}
+
 if [[ $ACTION == 'start' ]]; then
 
     check_docker_engine_running
+    clean_if_stopped
  
     D="$(docker version --format='{{json .Client.APIVersion}}')"
  
     export DOCKER_API_VERSION="v${D//\"/}"
 
-    docker run -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p ${HOST_BIND}${PORT}:${INTERNAL_PORT} -e MODE="${MODE}" -e HOST="${HOST}" -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} --rm -dt ${IMAGE_LOCATION}
+    docker run -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p ${HOST_BIND}${PORT}:${INTERNAL_PORT} -e MODE="${MODE}" -e HOST="${HOST}" -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} -l docker-php-admin --rm -dt ${IMAGE_LOCATION}
     if [[ $? == 0 ]]; then
         echo "Listen on ${MODE_TITLE}://${HOST}:${PORT}"
     fi
