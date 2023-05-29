@@ -81,6 +81,15 @@ class DockerEngineApi extends HttpHandler {
         if ($image_name != "") {
             $url .= "?name={$image_name}";
         }
+
+        $hostConfig = $json['HostConfig'] ?? null;
+        if ($hostConfig != null) {
+            $privileged = $hostConfig['Privileged'] ?? null;
+            if ($privileged != null) {
+                throw new Exception("Privileged mode is not supported");
+            }
+        }
+
         return $this->sendCommonRequest($url, $body, 201, self::MethodPost);
     }
 

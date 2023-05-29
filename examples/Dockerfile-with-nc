@@ -1,0 +1,7 @@
+FROM alpine:latest
+
+RUN apk update && apk upgrade --no-cache
+RUN apk add -y --no-cache bash netcat-openbsd tcpdump
+
+
+

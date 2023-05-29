@@ -121,9 +121,7 @@ function runParser(txt, prs, label, show_alert=true) {
     let parser = makeConsumeAll(prs);
     try {
         let result = parser(s);
-        console.log("parsing succeeded!")
-        console.log(result.show());
-        return result.result;
+        return result;
     } catch(ex) {
         console.log(ex.stack);
         let errmsg = formatParserError(ex, txt);

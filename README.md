@@ -34,7 +34,7 @@ How to use this stuff, after cloning this repository:
 - make sure that php-7.4 and composer are installed
 - run ```make install``` - this installs the php modules with composer
 - Run the server with ```make run```, this runs php as a local web server on port 8010 and port 8011 (for debugging purposes only)
-- On the same machine: use your browser and navigate to http://localhost:8001/images.php
+- On the same machine: use your browser and navigate to http://localhost:8010/images.php
 
 ### what i learned
 

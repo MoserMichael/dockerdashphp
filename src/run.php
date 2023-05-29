@@ -94,6 +94,15 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         return env_vars;
     }
 
+    function parseNetworkMode() {
+        let val = document.getElementById('network_mode').value;
+        if (val == "container") {
+            val += ":" + document.getElementById('network_mode_container_name').value;
+        }
+        return val;
+    }
+
+
     function parseMemSize(elm_id) {
         let val = document.getElementById(elm_id).value;
 
@@ -192,6 +201,11 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
         mapping = makeVolumeMapping();
         if (mapping != null) {
             request['HostConfig']['Binds'] = mapping;
+        }
+
+        let netMode = parseNetworkMode();
+        if (netMode != "") {
+            request['HostConfig']['NetworkMode'] = netMode;
         }
 
         let txt = parseMemSize('memory');
@@ -470,7 +484,7 @@ Container with image: <?php echo "<a title='inspect image' href='/gen.php?cmd=in
                 <option value="bridge">Bridge</option>
                 <option value="host">Host</option>
                 <option value="container">Container</option>
-                <option value="no-network">No Network</option>
+                <option value="none">No Network</option>
             </select>
         </td>
             <td style="width: 0">
