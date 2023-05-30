@@ -31,6 +31,30 @@ class FmtTable {
         $this->tbl_def = $tbl_def;
     }
 
+    private function colorize_json(string $json_pretty) : string {
+
+        //return $json_pretty;
+
+        $json_pretty = preg_replace(
+            '/"(\\\\.|[^\"]*)":/',
+            "<span id='json-key'>\"$1\"</span>:",
+            $json_pretty
+        );
+
+        $json_pretty = preg_replace(
+                '/"(\\\\.|[^\"]*)"([\,|\n])/',
+            "<span id='json-val'>\"$1\"</span>$2",
+            $json_pretty
+        );
+
+        /*
+        $json_pretty = preg_replace(
+            /\"([\\.|.])*)\"([,])([,])$/,
+            "<span id='json-value'>\"${1}${2}\"/>");
+        */
+        return $json_pretty;
+    }
+
     public function show_header() : string {
         $ret = '<table class="js-sort-table"><thead>';
         $keys = array_keys($this->tbl_def);
@@ -70,8 +94,11 @@ class FmtTable {
         return $ret . "</table>";
     }
 
-    private function add_td(string $ret, string $text) : string  {
-        return $ret . "<td>" . $text . "</td>";
+    private function add_td(string $ret, string $text, $id = "") : string  {
+        if ($id != "") {
+            $id = "id='{$id}'";
+        }
+        return $ret . "<td {$id}>" . $text . "</td>";
     }
 
     public function format_row(array $json) : string
@@ -88,8 +115,11 @@ class FmtTable {
 
     private function one_json_row(string $ret, array $data, bool $is_json) : string {
         $json_pretty = $is_json ? json_encode($data, JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES) : implode("\n",$data);
+
+        $json_pretty = $this->colorize_json($json_pretty);
+
         $json = "<pre>" . $json_pretty . "</pre>";
-        return $ret . "<tr>" . $this->add_td("", $json) . "</tr>" . "</table>";
+        return $ret . "<tr>" . $this->add_td("", $json, 'no-padding') . "</tr>" . "</table>";
     }
 
     public function echo_from_generator(\Generator $gen) : void {

@@ -1,5 +1,4 @@
 <?php require_once __DIR__ . "/base/nocache.php"; ?>
-<html>
 <?php include( __DIR__ . "/static-files/css.css"); ?>
 <script>
 <?php include( __DIR__ . "/static-files/sorttable/sort-table.min.js"); ?>
@@ -8,7 +7,7 @@
 <?php
 require_once __DIR__ . "/hdr.php";
 
-show_hdr(4);
+show_hdr(4  );
 ?>
 <h3>Docker version</h3>
 Command: <code>docker version</code>

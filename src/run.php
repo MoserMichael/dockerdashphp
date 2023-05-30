@@ -1,5 +1,4 @@
 <?php require_once __DIR__ . "/base/nocache.php"; ?>
-<html xmlns="http://www.w3.org/1999/html">
 
 
 <body>

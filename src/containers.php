@@ -1,8 +1,12 @@
 <?php require_once __DIR__ . "/base/nocache.php"; ?>
-<html>
 <?php include( __DIR__ . "/static-files/css.css"); ?>
 <script>
 <?php include( __DIR__ . "/static-files/sorttable/sort-table.min.js"); ?>
+
+function showTab(id,title) {
+    window.open(encodeURI('/attach.php?id=' + id + '&title=' + title),'_blank');
+}
+
 </script>
 <body>
 <?php
@@ -64,7 +68,17 @@ function make_api_id($row_val, $json) : string {
 
     if ($state == "running") {
         $diffs = "<a href='/containerDiff.php?id={$id}'>/diffs/</a>";
-        $ps = "{$ps}&nbsp;{$diffs}<br/><a href='/attach.php?id={$id}'><b>/Console/</b></a>";
+        $title = "";
+        if ($json["Names"] != "") {
+            $val = join(' ', $json['Names']);
+            $title .= "Container {$val} ";
+        }
+        if ($json["Image"] != "") {
+            $title .= "Image {$json['Image']}";
+        }
+
+        $urlTitle = urlencode($title);
+        $ps = "{$ps}&nbsp;{$diffs}<br/><a href='/attach.php?id={$id}&title={$urlTitle}'><b>/Console/</b>&nbsp;<a onclick=\"showTab('{$id}','{$title}');\"><b>/New Tab/</b></a></a>";
     }
 
     $inspect = make_cnt_inspect_link($id, $id);

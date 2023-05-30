@@ -2,6 +2,11 @@
 
 set -ex
 
+# from https://stackoverflow.com/questions/360201/how-do-i-kill-background-processes-jobs-when-my-shell-script-exits
+# without cleanup up the mess: the container will remain, if stopped - despite running docker --rm !!!
+#trap "exit" INT TERM
+#trap "kill 0" EXIT
+
 PORT_WSS="${PORT_WSS:=8002}"
 export TRACE="${TRACE}"
 

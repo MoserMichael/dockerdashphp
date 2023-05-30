@@ -15,7 +15,7 @@ Now run the script to start the WEB server for the docker dashboard:
 First the docker image of is being pulled, and then the docker container with the web server for this dashboard is being started.
 
 This approach has it's limitation - for example you can't use the dashboard to restart the docker engine, as this would kill the container instance that is hosting the web server for the dashbaord.  
-However this approach does have a big advantage - the docker image comes with all of the required software tools and packages.
+However this approach does have a big advantage - the docker image comes with all of the required software tools and packages, you just need to have docker running.
 
 Now the container has been started and the web server is listening on port 9000.
 

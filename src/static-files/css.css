@@ -34,5 +34,26 @@ a:hover {
 a:active {
   text-decoration: underline;
 }
+
+span#json-key {
+  color: cornflowerblue;
+}
+
+span#json-val {
+  color: #00FF00;
+}
+
+td#no-padding {
+  padding: 0;
+  background-color: #333333;
+}
+
+pre {
+  font-weight: bold;
+  color: white;
+  background-color: #333333;
+}
+
+
 </style>
 

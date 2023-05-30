@@ -4,6 +4,7 @@
 //show_hdr(-1);
 
 $id = $_GET['id'];
+$title = $_GET['title'] ?? "Console";
 
 ?>
 
@@ -12,8 +13,7 @@ $id = $_GET['id'];
 <html>
     <head>
         <meta charset="utf-8">
-        <title>wspty</title>
-
+        <title><?php echo "{$title}"; ?></title>
         <?php include( __DIR__ . "/static-files/css.css"); ?>
         <css>
         <style>

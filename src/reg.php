@@ -1,5 +1,4 @@
 <?php require_once __DIR__ . "/base/nocache.php"; ?>
-<html>
 <body>
 <?php
 require_once __DIR__ . "/hdr.php";
