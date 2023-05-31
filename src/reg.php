@@ -55,11 +55,26 @@ show_hdr(3);
             </div>
         </td>
     </tr>
+
+    <tr id="row5">
+        <td>
+            <label for="arch">Architecture:</label>
+        </td>
+        <td>
+            <input name="arch" id='arch' type="input"/>
+        </td>
+        <td>
+            (Optional field)
+        </td>
+    </tr>
+
+
     <tr id="row4">
         <td colspan="2">
             <input type="submit" value="Pull" onclick="onPullImage()"/>
         </td>
     </tr>
+
     <tr id="loading_image_tr" style="visibility: collapse">
         <td colspan="2">
             <div id="download_progress" style="font-family: monospace"></div>
@@ -75,7 +90,7 @@ show_hdr(3);
 
 
     function show_load_input(on) {
-        let rows = ["row1", "row2", "row3", "auth_user_password_tr", "auth_token_tr", "row4"];
+        let rows = ["row1", "row2", "row3", "auth_user_password_tr", "auth_token_tr", "row5", "row4"];
         show_rows(rows, on);
     }
 
@@ -190,10 +205,12 @@ show_hdr(3);
     function sendDownloadRequest() {
         let image = document.getElementById('image').value;
         let tag = document.getElementById('tag').value;
+        let arch = document.getElementById('arch').value.trim();
 
         let json = JSON.stringify({
             'load_image': image,
-            'tag': tag
+            'tag': tag,
+            'arch': arch
         });
 
         let username = document.getElementById('username').value;

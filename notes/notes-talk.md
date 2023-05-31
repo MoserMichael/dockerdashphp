@@ -1,21 +1,181 @@
-I want to show you my open source project: it's a docker dashboard, it allows you to work with your local docker installation in a web browser.
+I am going to show you my side project, it's a docker dashboard, it helps to work with docker from inside a web browser.
 
-Let's download the runner script:
+Let's start with an overview of docker and the docker command line:
+
+Docker allows you to run different operating system environments on your computer, what does that mean? I am working on a Mac laptop right now, it is running the Darwin operating system, but I can also run the Linux operating system on on the same machine inside a docker container!
+
+The container will appear to be as just other another application on the mac. For example: I can run Linux in a docker container, and this environment looks as just another application on the mac - I can switch to that application, I can pause/resume/stop it, the container can share resources with the host operating system - like I can allow it to access parts of the host operating file system, or share the network connection of the host operating system. 
+
+So let's run a Linux OS instance on this mac:
+
+We will use the docker command line tool: 
+
+> docker run --rm -it fedora:latest bash
+
+Now you are looking at at the linux console.
+
+> uname -a
+
+It tells us that that it's Linux operating system that is running on an ARM based CPU, and you can see the Kernel version.
+
+> cat /etc/*-release
+
+It tells us that this is the fedora distribution, and the version of fedora  that is running.
+
+Now let's take a quick look at the CLI command used to run the image
+
+> docker run --rm -ti fedora:latest bash
+
+- docker run    - tells the docker command line to create a new container instance and to run it.
+- -t            - tells docker to create a pseudo-terminal, that is required to run a interactive shell. 
+- -i            - interactive mode, the container is reading the commands that we are typing on the terminal.
+- --rm          - docker does not keep any information on this container, when it exits.
+- fedora:latest - fedora is the docker image - a docker image is a archive file, this archive file it is keeping all the files required to run the operating system, in fact it contains the whole file system of that operating system. It contains the operating system kernel, the runtime library and the applications that we can use once the operating system is up and running. 
+- fedora:latest - latest is the tag of the image. For each docker image there can be multiple versions, the tag value is standing for a particular version. Usually there is a latest tag that refers to the latest and greatest version of the docker image. (more on this later)
+- bash          - once the operating system is up then we want to run a bash shell.
+
+
+Now in another console: you can list the docker images that are available on this machine right now:
+
+> docker images
+
+REPOSITORY                          TAG       IMAGE ID       CREATED       SIZE
+fedora                              latest    5dce7be29f0d   3 weeks ago   273MB
+
+Remember that each docker image is a big archive file that contains the file system for an operating system. The Size column tells you the size of the contained file system.
+Also the name and tag of an image is just an alias for the IMAGE ID - that's a hash number that may change, if the author of the docker image decides to publish a different build for the same image and tag pair.
+
+
+We can also get a list of all known docker containers:
+
+> docker ps 
+
+CONTAINER ID   IMAGE                                      COMMAND                  CREATED             STATUS             PORTS                  NAMES
+ba2d516a0dbc   fedora:latest                              "bash"                   About an hour ago   Up About an hour                          elegant_faraday
+
+
+You have a column of the Image that was used to run the container, the status of the container - Up means that it is running right now. 
+
+The COMMAND column is the command that was used to start the container. The container stops when the process that was started with this command has stopped.
+
+The CREATED column tells you the uptime of the container, how long that container is already running.
+
+Each running container instance is identified by a unique id listed in the CONTAINER ID column. 
+
+The container instance can be used to perform interesting things, like pausing a docker container 
+
+> docker pause ba2d516a0dbc
+
+Now listing all of the containers again, the given container have the 'paused' state
+
+> docker ps
+
+When you switch back to the console of the container: it now doesn't react to any keys, you can't enter any commands.
+
+And you can resume the container again
+
+> docker unpause ba2d516a0dbc 
+
+> docker ps 
+
+Again listed as running, and the container is now receiving commands again.
+
+The container is either stopped by stopping the process created via the command passed to the docker run command (that is by exiting the bash shell that we passed)
+
+or by running a docker stop command with the id of the container - from outside of the container.
+
+
+---
+
+Ok, that was a quick overview, now let's look at my docker dashboard, the dashboard gives you a different way to access the functionality of the docker command line tool.
+I will show you how to use the dashboard, but will also show the equivalent docker CLI commands for each action.
+
+- Let's download the script for starting the dashboard:
 
     curl https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh >run-in-docker.sh    
 
-Let's make this script runnable. 
+- First, let's make this script runnable. 
 
     chmod +x ./run-in-docker.sh
 
-Now run the script to start the WEB server for the docker dashboard:
+- Now run the script to start the WEB server for the docker dashboard:
 
-    ./run-in-docker.sh -r -p 9000
+    ./run-in-docker.sh -r 
 
-First the docker image of is being pulled, and then the docker container with the web server for this dashboard is being started.
+  The dashboard is also running inside a docker container, so it is first downloading the image required to create the docker container.
 
-This approach has it's limitation - for example you can't use the dashboard to restart the docker engine, as this would kill the container instance that is hosting the web server for the dashbaord.  
-However this approach does have a big advantage - the docker image comes with all of the required software tools and packages, you just need to have docker running.
+  This approach has it's limitation - for example you can't use the dashboard to restart the docker engine, as this would kill the container instance that is hosting the web server for the dashbaord.  
+  However this approach also has it's advantage - the docker image puts all of the required tools for running the dashboard into one package, and it makes it easier to run the thing.
+
+  It also shows a URL for accessing the dashboard, let's put that in a browser:
+
+=====
+
+Inside the browser: you have a screen that is listing all of the docker containers that are running on the machine http://localhost:8000/containers.php
+
+And you have a screen that is listing all of the docker images available on this machine http://localhost:8000/images.php
+
+Now Let's download a docker image for the alpine Linux distribution. The Alpine docker image is a convenient choice, so you can make a docker image that is relatively small - an alpine docker image can be as small as five megabytes!
+
+http://localhost:8000/reg.php
+
+[Pull/Search] 
+
+Lets look for docker images that can be downloaded from docker hub. Docker hub is the official repository for docker images.
+
+That is equivalent to running the command 
+
+> docker search alpine
+
+Sometimes there is an indication on which one of them is the 'official version'
+
+Now you can also look at the list of available tags. An image name and tag is standing for a particular version of the image.
+
+Now you see something interesting with the Alpine image: each pair of image name and tag has multiple image entries, each of these image entries is a special build for a different CPU architecture! Now what happens if we pass a specific image like linux:latest to docker? Docker pull is always picking the image with the same CPU architecture of the host, which is: arm64 v8 (this Mac has an M1 processor)
+
+
+Let's download the latest version of alpine:latest
+
+It shows you the progress of downloading the image
+
+Let's also download the previous version of alpine - here I am asking to download the image for the amd64 architecture
+
+(alpine 3.17 amd64)
+
+> once it's done then lets look at the "images" tab - all local images a listed here. (This is equivalent to $(docker images))
+
+> docker images
+
+In the UI you can click on the id of the docker image or on the RepoDigest - this opens a screen where you can inspect additional details of the image.
+
+This is equivalent to the docker command 
+
+> docker inspect 'alpine:latest'
+
+This shows a lot of information:
+    The command that is run by default - if you create a container without specifying a run command, the environment for that command - very important if you need to debug a docker container.
+    The operating system and processor architecture of that image.
+
+Let's check the architecture of the previous image: amd64 - as requested.
+
+Now lets run the container: don't worry, docker can run both images, both with native cpu architecture and with amd64, however the non native architecture will start slower and run slower, docker has to emulate the amd64 instruction set on this machine, it's all running in a virtual machine!
+
+In fact all Linux images are virtualized on the mac, however if you run a linux container on a linux host then that is much cheaper - these are run as cgroup containers; here the image of the container is running on the same kernel as the host operating system, however with greater isolation - the processor ids, and file descriptors of the container are in a separate namespace and do not overlap with those of the host operating system.
+However on the mac the containers are all running as virtual machines.
+
+----
+
+
+Let's create a running container based on a docker image.
+
+In the 'Images tab' we have a 'Create Container' link - now this is a screen with many options, but don't worry!
+
+
+=======
+OLD TRY
+=======
+
+
 
 Now the container has been started and the web server is listening on port 9000.
 

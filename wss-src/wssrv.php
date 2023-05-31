@@ -240,9 +240,14 @@ class WebsocketConnectionComponent implements MessageComponentInterface {
 
         $tag = "";
         $auth = null;
+        $arch = "";
 
         if (array_key_exists('tag', $jsonMsg)) {
             $tag = $jsonMsg['tag'];
+        }
+
+        if (array_key_exists('arch', $jsonMsg)) {
+            $arch = $jsonMsg['arch'];
         }
 
         if (array_key_exists('authtoken', $jsonMsg)) {
@@ -263,7 +268,7 @@ class WebsocketConnectionComponent implements MessageComponentInterface {
         $socketState = new DockerCommonBinaryStreamCtx($this, $clientConnection, $dockerSocket);
         $api = new DockerEngineApi($dockerSocket, $socketState->getChunkConsumerInterface());
 
-        list ($ok) = $api->imagePull($image, $auth, $tag);
+        list ($ok) = $api->imagePull($image, $auth, $tag, $arch );
         $auth = null;
 
         if ($ok) {

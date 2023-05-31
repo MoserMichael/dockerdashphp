@@ -192,7 +192,7 @@ class DockerEngineApi extends HttpHandler {
         return $this->sendCommonRequest($url, null, 200, self::MethodPost   );
     }
 
-    public function imagePull(string $imageName, DockerEngineAuthentication $auth = null, string $tag = null) {
+    public function imagePull(string $imageName, DockerEngineAuthentication $auth = null, string $tag = null, $arch = null) {
         $ver = self::$dockerApiVersion;
         $hdr = "";
         $data = null;
@@ -203,6 +203,9 @@ class DockerEngineApi extends HttpHandler {
         }
         if ($auth != null) {
             $data = $auth->getEncoded();
+        }
+        if ($arch != null) {
+            $urlArg .= "&platform={$arch}";
         }
 
         $url = "/{$ver}/images/create?fromImage={$imageName}{$urlArg}";
