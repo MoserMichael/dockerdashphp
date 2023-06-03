@@ -10,27 +10,26 @@ Lets take a look, let's run a container that has it's own shell:
 
 A quick look at the command line:
 
-    - docker run    - tells the docker runtime to create a new container instance and to start running it
-
-    - ubuntu:latest - ubuntu is the docker image for running the Linux operating system with the ubuntu distribution. A docker image is a archive file, this archive file it is keeping all the files required to run the operating system, in fact it contains the whole file system of that operating system. 
+- docker run    - tells the docker runtime to create a new container instance and to start running it
+- ubuntu:latest - ubuntu is the docker image for running the Linux operating system with the ubuntu distribution. A docker image is a archive file, this archive file it is keeping all the files required to run the operating system, in fact it contains the whole file system of that operating system. 
                     - latest is the tag of the image. For each docker image there can be multiple versions, the tag value is standing for a particular version. Usually there is a latest tag that refers to the latest and greatest version of the docker image.
+- bash          - tells the container to run a bash shell as the main command. Now this is the main command is running inside the  container and it has a special status: the container stops running, when the main command stops.
 
-    - bash          - tells the container to run a bash shell as the main command. Now this is the main command is running inside the  container and it has a special status: the container stops running, when the main command stops.
-
-    - -ti           - this option for running a shell that appears right in this terminal window. That's like passing -t and -i..
-    - -i            - interactive mode, the container is reading the commands that we are typing within the shell.
-    - -t            - tells docker to create a pseudo-terminal, that is required to run a interactive shell.
-
-    - --rm          - docker does not keep any information on this container, when it exits.
+- -ti           - this option for running a shell that appears right in this terminal window. That's like passing -t and -i..
+- -i            - interactive mode, the container is reading the commands that we are typing within the shell.
+- -t            - tells docker to create a pseudo-terminal, that is required to run a interactive shell.
+- --rm          - docker does not keep any information on this container, when it exits.
 
 
 Lets look at the shell: we get the illusion of running as root.
 
+```
 > # whoami
 > root
 
 > # uname -a
 > Linux 9ab0a99ff468 5.10.124-linuxkit #1 SMP PREEMPT Thu Jun 30 08:18:26 UTC 2022 aarch64 aarch64 aarch64 GNU/Linux
+```
 
 It tells us that we are running on the Linux operating system
 
@@ -97,7 +96,7 @@ Now in another console: you can list the docker images that are available on the
 > docker images
 
 REPOSITORY                          TAG       IMAGE ID       CREATED       SIZE
-fedora                              latest    5dce7be29f0d   3 weeks ago   273MB
+ubuntu                              latest    5dce7be29f0d   3 weeks ago   273MB
 ```
 
 Remember that each docker image is a big archive file. This archive contains the file system that is available to the operating system of the container. The Size column tells you the size of the contained file system.
@@ -109,7 +108,7 @@ We can also get a list of all docker containers:
 > docker ps 
 
 CONTAINER ID   IMAGE                                      COMMAND                  CREATED             STATUS             PORTS                  NAMES
-ba2d516a0dbc   fedora:latest                              "bash"                   About an hour ago   Up About an hour                          elegant_faraday
+ba2d516a0dbc   ubuntu:latest                              "bash"                   About an hour ago   Up About an hour                          elegant_faraday
 ```
 
 Each container has a STATUS - this one is Up, that mans it is running right now. 
@@ -166,7 +165,7 @@ or by running a docker stop command with the id of the container - from outside 
 There is a different way to run containers, like this one:
 
 ```
-> docker run fedora:latest ls -al /
+> docker run ubuntu:latest ls -al /
 ```
 
 Note that this one is just listing all the files in the root directory of the file system and exiting.
@@ -175,7 +174,7 @@ Note that this one is just listing all the files in the root directory of the fi
 > docker ps -a
 
 CONTAINER ID   IMAGE           COMMAND                 CREATED          STATUS                      PORTS     NAMES
-d45c22e76249   fedora:latest   "ls -al /"              51 seconds ago   Exited (0) 50 seconds ago             stoic_tesla 
+d45c22e76249   ubuntu:latest   "ls -al /"              51 seconds ago   Exited (0) 50 seconds ago             stoic_tesla 
 ```
 
 The status of the container is 'Exited (0)' , Note the the -a option with docker ps, it tells to show all containers, even those that have stopped-. 
@@ -388,16 +387,16 @@ Let's search for an image on Docker hub - in the Pull/Search screen
 
     http://0.0.0.0:9000/reg.php
 
-    (Search for fedora)
+    (Search for ubuntu)
 
-http://0.0.0.0:9000/searchres.php?cmd=search&id=fedora
+http://0.0.0.0:9000/searchres.php?cmd=search&id=ubuntu
 
-    This table is listing all of the matching docker images, similar to $(docker search fedora)
+    This table is listing all of the matching docker images, similar to $(docker search ubuntu)
     Now here we have an additional link with each search result
 
-http://0.0.0.0:9000/searchresdetails.php?arg=fedora
+http://0.0.0.0:9000/searchresdetails.php?arg=ubuntu
 
-    This screen lists all the tags for an image that appears in the search results. A particular image is always described by the combination of the image name and a tag; there may be multiple tags, each describing a different build of the image. Each line has some additional information - the fedora image is always built for the linux operating system, now each tag can have multiple images - each one suitable for a particular processor architectures, amd64 - is 64 bit the Intel x86_64 architecture, there is also arm64 - this is the processor architector of the Apple M1 chip.
+    This screen lists all the tags for an image that appears in the search results. A particular image is always described by the combination of the image name and a tag; there may be multiple tags, each describing a different build of the image. Each line has some additional information - the ubuntu image is always built for the linux operating system, now each tag can have multiple images - each one suitable for a particular processor architectures, amd64 - is 64 bit the Intel x86_64 architecture, there is also arm64 - this is the processor architector of the Apple M1 chip.
 
     You can follow up on the older tags - right now older tags like version 23 to 20 are only build for the 64 bit intel processor (amd64) 
 
@@ -405,14 +404,14 @@ http://0.0.0.0:9000/searchresdetails.php?arg=fedora
     However you can try to try to require a given exact image by refering to it's sha.
     A Dockerfile can specify the image name, image tag and sha checksum - that will ignore all future retroactive updates for the image.
 
-FROM  fedora:38@sha256:ed0bafb5fc0ef5128ebe28c3d4bfbab2770913afd791d1f5b413d7b20b586ff6
+FROM  ubuntu:38@sha256:ed0bafb5fc0ef5128ebe28c3d4bfbab2770913afd791d1f5b413d7b20b586ff6
     
 
-Let's pull the latest fedora image from docker hub
+Let's pull the latest ubuntu image from docker hub
     
     http://0.0.0.0:9000/reg.php
 
-    (filling in fedora and latest under "Pulling docker image" and pressing Pull)
+    (filling in ubuntu and latest under "Pulling docker image" and pressing Pull)
 
 You can see a progress indicator here, as the image is being pulled.
 
@@ -420,9 +419,9 @@ Now lets look at the current list of local images
 
     http://0.0.0.0:9000/images.php
 
-The Fedora image has just been pulled, and is now listed as a local image.
+The ubuntu image has just been pulled, and is now listed as a local image.
 
-Let's press at the 'Create Container' link near the 'fedora image'
+Let's press at the 'Create Container' link near the 'ubuntu image'
 
 We will run the container in "detached mode" - meaning that it will run in the background, as a daemon process.
 
@@ -454,7 +453,7 @@ It is possible to get a terminal that runs within the interactive container! Let
 
     cat /etc/os-release
 
-Now we have a terminal into a running fedora system, one that can access my home directory via the mount 
+Now we have a terminal into a running ubuntu system, one that can access my home directory via the mount 
 
     ls /mnt/home
 
