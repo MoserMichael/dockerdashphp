@@ -2,60 +2,115 @@ I am going to show you my side project, it's a docker dashboard, it helps to wor
 
 Let's start with an overview of docker and the docker command line:
 
-Docker allows you to run different operating system environments on your computer, what does that mean? I am working on a Mac laptop right now, it is running the Darwin operating system, but I can also run the Linux operating system on on the same machine inside a docker container!
+Docker allows you to run lightweight containers, a lightweight container is an environment for running processes. A process that is running inside the lightweight container is essentially running on the same operating system as the host operating system, in my case that is OSX Darwin. However it is running in isolation from the host OS, for example a process running inside the container doesn't know about any processes that are running on the host.
 
-The container will appear to be as just other another application on the mac, but you are actually running on another operating system with its own environment that is isolated from your Mac. 
-The container can also share resources with the host operating system - you can access parts of the host operating file system, or share the network of the host operating system. 
+Lets take a look, let's run a container that has it's own shell:
 
-So let's run a Linux OS instance on this mac:
+> docker run --rm -ti ubuntu:latest bash
 
-We will use the docker command line tool: 
+A quick look at the command line:
 
-> docker run --rm -it fedora:latest bash
+    - docker run    - tells the docker runtime to create a new container instance and to start running it
 
-Now you are looking at at the linux console.
+    - ubuntu:latest - ubuntu is the docker image for running the Linux operating system with the ubuntu distribution. A docker image is a archive file, this archive file it is keeping all the files required to run the operating system, in fact it contains the whole file system of that operating system. 
+                    - latest is the tag of the image. For each docker image there can be multiple versions, the tag value is standing for a particular version. Usually there is a latest tag that refers to the latest and greatest version of the docker image.
 
-> uname -a
+    - bash          - tells the container to run a bash shell as the main command. Now this is the main command is running inside the  container and it has a special status: the container stops running, when the main command stops.
 
-It tells us that that it's Linux operating system that is running on an ARM based CPU, and you can see the Kernel version.
+    - -ti           - this option for running a shell that appears right in this terminal window. That's like passing -t and -i..
+    - -i            - interactive mode, the container is reading the commands that we are typing within the shell.
+    - -t            - tells docker to create a pseudo-terminal, that is required to run a interactive shell.
 
-> cat /etc/*-release
-
-The fedora distribution on this container - that's what we asked for when we started this container.
-
-Now let's take a quick look at the CLI command used to run the image
-
-> docker run --rm -ti fedora:latest bash
-
-- docker run    - tells the docker runtime to create a new container instance and to run it.
-- -t            - tells docker to create a pseudo-terminal, that is required to run a interactive shell.
-- -i            - interactive mode, the container is reading the commands that we are typing within the shell.
-- --rm          - docker does not keep any information on this container, when it exits.
-- fedora:latest - fedora is the docker image - a docker image is a archive file, this archive file it is keeping all the files required to run the operating system, in fact it contains the whole file system of that operating system. It contains the operating system kernel, the runtime library and the applications that we can use, when the operating system is up and running. 
--               - latest is the tag of the image. For each docker image there can be multiple versions, the tag value is standing for a particular version. Usually there is a latest tag that refers to the latest and greatest version of the docker image. (more on this later)
-- bash          - once the operating system is up then we want to run a bash shell. Now this is the main command that is run by this container it has a special status: the container stops running, when the main command stops.
+    - --rm          - docker does not keep any information on this container, when it exits.
 
 
-Also: docker is a client program, it is reading the command line and sending some request to the docker service. The docker service will in turn do as requested: create a new container, query the state of this container, etc. etc.
+Lets look at the shell: we get the illusion of running as root.
 
+> # whoami
+> root
+
+> # uname -a
+> Linux 9ab0a99ff468 5.10.124-linuxkit #1 SMP PREEMPT Thu Jun 30 08:18:26 UTC 2022 aarch64 aarch64 aarch64 GNU/Linux
+
+It tells us that we are running on the Linux operating system
+
+```
+> # cat /etc/*-release
+```
+
+with the Ubuntu distribution
+
+Let's list all running processes.
+
+```
+> # ps -elf 
+> F S UID        PID  PPID  C PRI  NI ADDR SZ WCHAN  STIME TTY          TIME CMD
+> 4 S root         1     0  0  80   0 -  1035 do_wai 04:25 pts/0    00:00:00 bash
+> 4 R root        13     1  0  80   0 -  1603 -      05:01 pts/0    00:00:00 ps -elf
+```
+
+The container doesn't know about any process running on the host operating system, there is just the shell and ps running!
+Also you see that this is not a real operating system - there are no daemon processes running in the background, just the shell and ps - the command that is listing the processes.
+
+Also with docker you get this hidden file in the root directory of the file system - that's another way of checking you are running in a docker container.
+
+```
+> # stat /.dockerenv
+>   File: /.dockerenv
+>   Size: 0         	Blocks: 0          IO Block: 4096   regular empty file
+> Device: 9ah/154d	Inode: 1975379     Links: 1
+```
+
+Let's look at the file system
+
+```
+> # ls -al /
+> total 56
+> drwxr-xr-x   1 root root 4096 Jun  3 04:25 .
+> drwxr-xr-x   1 root root 4096 Jun  3 04:25 ..
+> -rwxr-xr-x   1 root root    0 Jun  3 04:25 .dockerenv
+> lrwxrwxrwx   1 root root    7 May 22 14:05 bin -> usr/bin
+> drwxr-xr-x   2 root root 4096 Apr 18  2022 boot
+> drwxr-xr-x   5 root root  360 Jun  3 04:25 dev
+> drwxr-xr-x   1 root root 4096 Jun  3 04:25 etc
+> drwxr-xr-x   2 root root 4096 Apr 18  2022 home
+> lrwxrwxrwx   1 root root    7 May 22 14:05 lib -> usr/lib
+> drwxr-xr-x   2 root root 4096 May 22 14:05 media
+> drwxr-xr-x   2 root root 4096 May 22 14:05 mnt
+> drwxr-xr-x   2 root root 4096 May 22 14:05 opt
+> dr-xr-xr-x 211 root root    0 Jun  3 04:25 proc
+> drwx------   2 root root 4096 May 22 14:10 root
+> drwxr-xr-x   5 root root 4096 May 22 14:10 run
+> lrwxrwxrwx   1 root root    8 May 22 14:05 sbin -> usr/sbin
+> drwxr-xr-x   2 root root 4096 May 22 14:05 srv
+> dr-xr-xr-x  13 root root    0 Jun  3 04:25 sys
+> drwxrwxrwt   2 root root 4096 May 22 14:10 tmp
+> drwxr-xr-x  11 root root 4096 May 22 14:05 usr
+> drwxr-xr-x  11 root root 4096 May 22 14:10 var
+```
+
+The file system of the container is very different from that of the host. No files are being shared in this case.
 
 Now in another console: you can list the docker images that are available on the host:
 
+```
 > docker images
 
 REPOSITORY                          TAG       IMAGE ID       CREATED       SIZE
 fedora                              latest    5dce7be29f0d   3 weeks ago   273MB
+```
 
 Remember that each docker image is a big archive file. This archive contains the file system that is available to the operating system of the container. The Size column tells you the size of the contained file system.
  the IMAGE ID - that's a number that identifies this docker image uniquely. The name and tag is an alias to this number, note that the image id may change, if the author of the docker image decides to publish a different build for the same image and tag. 
 
 We can also get a list of all docker containers:
 
+```
 > docker ps 
 
 CONTAINER ID   IMAGE                                      COMMAND                  CREATED             STATUS             PORTS                  NAMES
 ba2d516a0dbc   fedora:latest                              "bash"                   About an hour ago   Up About an hour                          elegant_faraday
-
+```
 
 Each container has a STATUS - this one is Up, that mans it is running right now. 
 
@@ -69,28 +124,36 @@ Each running container instance is identified by a unique id listed in the CONTA
 
 The container id is used to controll the container with the docker command line - like pausing a docker container 
 
+```
 > docker pause ba2d516a0dbc
+```
 
 When you switch back to the console of the container: it now doesn't react to any keys now, you can't enter any commands, everything is frozen.
 
 Now listing all of the containers again, the given container have the 'paused' state
 
+```
 > docker ps
+```
 
 And you can resume the container again
 
+```
 > docker unpause ba2d516a0dbc 
 
 > docker ps 
+```
 
 Again listed as running, and the container is now receiving commands again.
 
 The container stops to run as follows:
 - The docker cli command can stop it with the command 
 
-> docker stop <CONTAINER_ID>
+```
+> docker stop ba2d516a0dbc 
 
 > docker ps -a
+```
 
 Note that the container now longer appears in the list of running containers, that's due to the --rm option passed to docker run - the container object is removed just as it exited.
 
@@ -102,15 +165,18 @@ or by running a docker stop command with the id of the container - from outside 
 
 There is a different way to run containers, like this one:
 
+```
 > docker run fedora:latest ls -al /
+```
 
 Note that this one is just listing all the files in the root directory of the file system and exiting.
 
+```
 > docker ps -a
 
 CONTAINER ID   IMAGE           COMMAND                 CREATED          STATUS                      PORTS     NAMES
 d45c22e76249   fedora:latest   "ls -al /"              51 seconds ago   Exited (0) 50 seconds ago             stoic_tesla 
-
+```
 
 The status of the container is 'Exited (0)' , Note the the -a option with docker ps, it tells to show all containers, even those that have stopped-. 
 
@@ -118,20 +184,26 @@ The main command displayed all the files in the root directory and then exits, t
 
 You can still look at the output produced by this container 
 
+```
 > docker logs d45c22e76249
+```
 
 That command is very usefull for debugging containers!
 
 Now you also wait until the container exits and then show the exit status, just like with a real process.
 
+```
 >docker wait d45c22e76249
  0
+```
 
 Now you can clean up the entries for stopped containers
 
+```
 > docker container prune -f
 
 > docker ps -a 
+```
 
 No more entries of stopped containers.
 
@@ -142,20 +214,26 @@ I want to show you how to use the dashboard, but I will also show the equivalent
 
 - Let's download the script for starting the dashboard:
 
+```
     curl https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh >run-in-docker.sh    
+```
 
 - First, let's make this script runnable. 
 
+```
     chmod +x ./run-in-docker.sh
+```
 
 - Now run the script to start the WEB server for the docker dashboard:
 
+```
     ./run-in-docker.sh -r 
+```
 
   The dashboard is also running inside a docker container, so it is first downloading the docker image for this tool.
 
   This approach has it's limitation - for example you can't use the dashboard to restart the docker engine, as this would kill the container instance that is hosting the web server for the dashbaord.  
-  However this approach also has it's advantage - the docker image contains all of the required tools for running the dashboard server, it's all there, ready to run - a convenient form to distribute your software.
+  However this approach also has it's advantage - the docker image contains all of the required tools for running a WEB server, it's all packaged into the docker image, ready to run. This is a convenient form to distribute  software.
 
   The URL for accessing the dashboard if right there in the console, let's put that in a browser:
 
@@ -171,7 +249,7 @@ Lets look for docker images on docker hub. Docker hub is a big public repository
 
 Let's look at the available docker images for the alpine Linux distribution. The Alpine docker image is often used because the image can be quite small - as small as five megabytes.
 
-http://localhost:8000/reg.php
+```http://localhost:8000/reg.php```
 
 [Pull/Search] 
 
@@ -244,7 +322,7 @@ The home directory on my mac will be visible as /var/homedir from inside the con
 The container will share exactly the same network as the host, if a process inside the container is listening to a port, then this service will also be reachable from the current user on the mac.
 
 This is not the default networking mode: the default setting is 'bridge', here where a virtual ethernet adapter is created for the container.
-a process running inside the contaienr can still connect to any host visible on the mac os, all of the network traffic is forwarded ot the real network adapter,
+a process running inside the contaienr can still connect to the network of the host OS, all of the network traffic of the container is forwarded to th
 However a service running inside the container which is listening on a port has a harder job: in 'bridge' mode we need to explicitly forward this port from the host network to the container network (see the 'Exposed ports' field in this form)
 
 Let's start the thing.
