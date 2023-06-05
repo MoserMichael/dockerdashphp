@@ -97,8 +97,10 @@ $tbl = new base\FmtTable(array(
     "Labels" => array("Labels",  __NAMESPACE__ . "\\make_api_labels"),
     "Created" => array("CreatedSince", __NAMESPACE__ . "\\make_api_created"),
     "Size" => array("Size", __NAMESPACE__ . "\\make_size"),
-    "Shared Size" => "SharedSize",
-    "VirtualSize" => array("Virtual Size", __NAMESPACE__ . "\\make_size"),
+
+    // no one knows what these mean for images (SharedSize is always -1, anv Virtual Size is always equal to size - for images.
+    //"Shared Size" => "SharedSize",
+    //"VirtualSize" => array("Virtual Size", __NAMESPACE__ . "\\make_size"),
 ));
 
 $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);

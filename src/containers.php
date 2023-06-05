@@ -120,7 +120,10 @@ function make_api_created_at($row_val, $json) : string {
 }
 
 function make_size($row_val, $json) : string {
-    return base\human_readable_size($row_val);
+
+    $ret = base\human_readable_size($json["SizeRw"] ?? "") . " / " . base\human_readable_size($json["SizeRootFs"] ?? "");
+
+    return $ret;
 }
 
 function make_api_networks($row_val, $json) : string {
@@ -205,7 +208,7 @@ $tbl = new base\FmtTable(array(
     "Image" => array("Image", "make_api_image"),
     "Command" => "Command",
     "NetworkSettings" => array("NetworkSettings", __NAMESPACE__ . "\\make_api_networks"),
-    "SizeRootFs" => array("RootFs Size",  __NAMESPACE__ . "\\make_size"),
+    "SizeRootFs/ReadWrite" => array("SizeRootFs",  __NAMESPACE__ . "\\make_size"),
     "Mounts" => array("Mounts",  __NAMESPACE__ . "\\make_api_mounts"),
 ));
 $json = json_decode($jsonRaw, JSON_OBJECT_AS_ARRAY);
