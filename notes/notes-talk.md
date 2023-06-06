@@ -59,7 +59,7 @@ Let's list all running processes.
 > 4 R root        13     1  0  80   0 -  1603 -      05:01 pts/0    00:00:00 ps -elf
 ```
 
-The container doesn't know about any process running on the host operating system, there is just the shell and ps running!
+The container doesn't know about any process running on the host operating system, there is just the shell and the ps process running (that one is listing all the running processes)
 You can see that this is not a real operating system - there are no daemon processes running in the background, just the shell and ps (ps is the command that is listing the processes)
 On a full setup or virtual machine one would also see common daemon procsses like ```init``` or ```systemd``` - but here on a docker contaiener there is nothing of that sort.
 
@@ -226,7 +226,7 @@ No more entries of stopped containers.
 
 ---
 
-Ok, that an intro to docker, now let's look at my docker dashboard project, the dashboard gives you a different way to access the functionality of the docker command line tool.
+Ok, that was an intro to docker, now let's look at my docker dashboard project, the dashboard gives you a different way to access the functionality of the docker command line tool.
 I want to show you how to use the dashboard, but I will also show the equivalent docker CLI commands for each action.
 
 - Let's download the script for starting the dashboard:
@@ -249,17 +249,17 @@ I want to show you how to use the dashboard, but I will also show the equivalent
 
   The docker image contains all of the executables and configurations required for running a WEB server, it's all there in the docker image, ready to run. This is a convenient form to distribute software.
 
-  However ther are limitations - for example you can't use the dashboard to restart the docker engine, as this would also kill the container with the web server of this dashbaord.  
+  However ther are some limitations for this case - for example you can't use the dashboard to restart the docker engine, as this would also kill the container that is running the same tool
 
   The web server is now up and running. Now the URL for accessing the dashboard is written right there in the console, let's put that in a browser:
 
 =====
 
-Inside the browser: you have a [Containers] tab, that's screen that is listing all of the docker containers running on the machine http://localhost:8000/containers.php
-This is similar to the output of the ```docker ps``` command, with some additions.
-
 In the [Images] tab -  you have a screen that is listing all of the docker images available on this machine http://localhost:8000/images.php 
 This is similar to the output of the ```docker images``` command, also with some additions.
+
+Inside the browser: you have a [Containers] tab, that's screen that is listing all of the docker containers running on the machine http://localhost:8000/containers.php
+This is similar to the output of the ```docker ps``` command, with some additions.
 
 --
 
@@ -267,7 +267,19 @@ The [Pull/Search] tab, Lets search for docker images on the docker hub registry.
 
 Let's look at the available docker images for the alpine Linux distribution. The Alpine docker image is often used because the image can be quite small - as small as five megabytes.
 
-Let's look for the alpine image 
+Let's look at the docker image that is used to run the dashboard server: (click link ghcr.io/mosermichael/phpdocker-mm:latest )
+
+This screen is showing same data as returned by the docker command ```docker inspect ghcr.io/mosermichael/phpdocker-mm:latest```
+
+It shows us a plenty of information in json format, displayed in a more readable format:
+
+    First we different ways of identifying the same docker image:
+    First you have the full Id, written as a sha256 hash value - this value can stand in for the docker name or the short id (using the full id can be of benefit, as it would 
+
+    - it is actually better to use the full id, instead of the short one - this would avoid possible conincidences of the short id - which is an abridged version of the full id.
+
+
+
 
 That one is equivalent to running the command 
 
@@ -319,6 +331,7 @@ Now docker will run the Intel image by means of the open source QEMU emulator, s
 Let's create a running container based on a docker image.
 
 In the 'Images tab' we have a 'Create Container' link - now this is a screen with many options...
+
 
 In this page we are limited to create a docker containers running in 'detached mode' -  here you can't access the input or output streams. these containers are like daemons or services, they are running in the background, 
 
