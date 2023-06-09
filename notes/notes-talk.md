@@ -2,16 +2,16 @@ I am going to show you my side project, it's a docker dashboard, it helps to wor
 
 Let's start with an overview of docker :
 
-Docker allows you to run lightweight containers, a lightweight container is an environment for running processes in a different kind of environment.
+Docker allows you to run lightweight containers, a lightweight container is a tool that is simulating the presence of a different computing environment.
 This different environment may be a different operating system or even a different operating system running on a different kind of processor.
-For example: I am running on the MacOS with a M1 processor, however a running docker container my think that it is running on Linux that is running on a 64 bit Intel processor.
-However this is a kind of illusion: a process that is running inside the lightweight container is still using the services of the host operating system. 
-When the process in such a container is making a system call, then the docker runtime is translating this system call into a call to the host operating system.
 
-Another feature: the process running inside the container is running isolated from the host operating system, for example a process running inside the container doesn't know anything about processes running outside of the container, it doesn't know anything about native processes that are running on the host OS.
+For example: I am running on the MacOS with a M1 processor, however I can start a docker container based on a ubuntu docker image for amd64, a process running inside this docker container would think that it is running on the Linux operating system that is running on a 64 bit Intel processor.
+However this is a kind of illusion: a process that is running inside the lightweight container is still using the services of the host operating system. 
+When the process in such a container is making a system call, then the docker runtime is intercepting the system call an translating it into a call to the host operating system.
+
+Another feature: the process running inside the container is running in isolation from the host operating system, for example a process running inside the container doesn't know anything about processes running outside of the container.
 The container has it's own file system and it doesn't see any of the file handles opened by processes on the host operating system (that's the default behavior).
 The docker runtime is creating the illusion of being on a totally different machine!
-
 
 All this may sound similar to a what a virtual machine like KVM is doing, however lightweight containers are introducing a smaller overhead than virtual machines, on average.
 
@@ -21,9 +21,9 @@ Enough theory, let's run a Linux container that has it's own interactive shell:
 
 A quick look at the command line:
 
-- docker run    - tells the docker runtime to create a new container instance and to start running it
+- docker run    - tells the docker runtime to create a new container instance and to start running it, the container is defined by the docker image, which comes next.
 - ubuntu:latest - ubuntu is the docker image for running the Linux operating system with the ubuntu distribution. A docker image is a archive file, this archive file it is keeping all the files required to run the operating system, in fact it contains the whole file system of that operating system. 
-                    - latest is the tag of the image. For each docker image there can be multiple versions, the tag value is standing for a particular version. Usually there is a latest tag that refers to the latest and greatest version of the docker image.
+                    - latest - that's the tag of the image. For each docker image there can be multiple versions, the tag value is standing for a particular version. Usually there is a latest tag that refers to the latest and greatest version of the docker image.
 - bash          - tells the container to run a bash shell as its main command. Now this main command will be running inside the container so it will think  that it is a Linux shell. Also the main does have a special status: the container stops running, when the main command stops.
 
 - -ti           - this option for running a shell that appears right in this terminal window. That's like passing -t and -i..
@@ -48,7 +48,7 @@ The ```uname``` command tells us that we are running on the Linux operating syst
 > # cat /etc/*-release
 ```
 
-The presence of these files is telling us that we are running on the Ubuntu distribution
+it is running on the Ubuntu distribution
 
 Let's list all running processes.
 
@@ -61,7 +61,7 @@ Let's list all running processes.
 
 The container doesn't know about any process running on the host operating system, there is just the shell and the ps process running (that one is listing all the running processes)
 You can see that this is not a real operating system - there are no daemon processes running in the background, just the shell and ps (ps is the command that is listing the processes)
-On a full setup or virtual machine one would also see common daemon procsses like ```init``` or ```systemd``` - but here on a docker contaiener there is nothing of that sort.
+On a real machine or virtual machine one would also see common daemon procsses like ```init``` or ```systemd``` - but here on a docker contaiener there is nothing of that sort.
 
 ```
 > # stat /.dockerenv
@@ -70,7 +70,7 @@ On a full setup or virtual machine one would also see common daemon procsses lik
 > Device: 9ah/154d	Inode: 1975379     Links: 1
 ```
 
-Also with docker you get this hidden file in the root directory of the file system - that's another way of checking you are running in a docker container.
+Also with docker you get this hidden file in the root directory of the file system - that's how you can check if you are running in a docker container.
 
 
 Let's look at the file system
@@ -103,17 +103,33 @@ Let's look at the file system
 
 The file system of the container is very different from that of the host. No files are being shared with the host - in this particular case.
 
-Now in another console on the host os: you can list the docker images that can be used to start a docker container
+Now in another console on the host os: 
+you can list the docker images present on this system. A docker image contains all the files that are required for runnign a docker container
 
 ```
 > docker images
 
-REPOSITORY                          TAG       IMAGE ID       CREATED       SIZE
-ubuntu                              latest    5dce7be29f0d   3 weeks ago   273MB
+REPOSITORY                          TAG       IMAGE ID       CREATED        SIZE
+ghcr.io/mosermichael/phpdocker-mm   latest    588efceade80   7 days ago     510MB
+alpine                              latest    44dd6f223004   4 weeks ago    7.73MB
 ```
+
 
 Remember that each docker image is a big archive file. This archive contains the file system that is available to the running container and to the docker runtime. The SIZE column tells you the size of the contained file system.
  the IMAGE ID - that's a number that identifies this docker image uniquely. The name and tag is an alias to this number, note that the image id may change, if the author of the docker image decides to publish a different build for the same image and tag - this ID is a short form of the sha256 hash computed from the whole content of the image file.
+
+the ```--no-trunc``` options is showing the full image id.
+```
+docker images --no-trunc
+
+REPOSITORY                          TAG       IMAGE ID                                                                  CREATED        SIZE
+ghcr.io/mosermichael/phpdocker-mm   latest    sha256:588efceade80627169bb859cdcc2bd2c90fc768588c602d2f13061175f8d82ad   7 days ago     510MB
+alpine                              latest    sha256:44dd6f2230041eede4ee5e792728313e43921b3e46c1809399391535c0c0183b   4 weeks ago    7.73MB
+alpine                              3.17      sha256:9ed4aefc74f6792b5a804d1d146fe4b4a2299147b0f50eaf2b08435d7b38c27e   2 months ago   7.05MB
+```
+
+
+
 
 We can also get a list of all docker containers running right now:
 
@@ -126,7 +142,7 @@ ba2d516a0dbc   ubuntu:latest                              "bash"                
 
 Each container has a STATUS - this one is Up, that mans it is running right now. 
 
-The IMAGE column is listing the name of the docker image used to create this container instance
+The IMAGE column is listing the REPOSITORY and TAG of the docker image used to create this container instance. You can refer to a docker image by the combination of REPOSITORY and TAG or via the IMAGE ID, some people prefer to use the full IMAGE ID over the short form, in order to avoid the small chance of collisions - remember that the short ID are the first six bytes of the full IMAGE ID.
 
 The STATUS column tells us that this container is Up and running.
 
@@ -173,11 +189,14 @@ The container stops to run as follows:
 
 Note that the container now longer appears in the list of running containers, that's due to the ```--rm``` option passed to docker run - the container object is removed just as it exited.
 
-A container is stopped when the main process running in the container stops - that is the process created via the command passed to the docker run command 
+A container is stopped when the main process running in the container stops - that is the process created via the command passed to the docker run command .
 
-Or by running a docker stop command with the id or name of the container - from outside of the container.
+For example this is happeneing if I start the same container again, and then just exit from the shell
 
-
+```
+docker run --rm -ti ubuntu:latest bash
+# exit
+```
 --
 
 There is a different way to run containers, like this one:
@@ -389,10 +408,15 @@ However the dashboard is more persistent in its effort - for example: if the doc
 Let's look at some additional features:
 
 
+# docker ps by talking to the doccker daemon via it's domain socket
 
 curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/json | jq . | less
 
+# this one also adds "SizeRootFs" to the json output - like docker ps -a 
+
 curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/json?size=true | jq . | less
+
+
 
 https://github.com/docker/docs/issues/1520
 
@@ -446,4 +470,14 @@ https://iximiuz.com/en/posts/implementing-container-runtime-shim/
 
     # or...
     kubectl get nodes -o jsonpath='{.spec.containersRuntime}'
+
+
+docker id vs Repo digest? what is the difference?
+docker id 
+    
+    https://stackoverflow.com/questions/56364643/whats-the-difference-between-a-docker-images-image-id-and-its-digest
+
+        - The "digest" is a hash of the manifest, introduced in Docker registry v2.
+        - The image ID is a hash of the local image JSON configuration.
+
 //-->

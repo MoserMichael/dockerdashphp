@@ -121,7 +121,7 @@ function make_api_created_at($row_val, $json) : string {
 
 function make_size($row_val, $json) : string {
 
-    $ret = base\human_readable_size($json["SizeRw"] ?? "") . " / " . base\human_readable_size($json["SizeRootFs"] ?? "");
+    $ret = base\human_readable_size($json["SizeRootFs"] ?? 0) . " / " . base\human_readable_size($json["SizeRw"] ?? 0);
 
     return $ret;
 }
