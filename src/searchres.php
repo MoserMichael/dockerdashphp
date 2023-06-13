@@ -26,6 +26,13 @@ function make_name($row_val, $json) : string {
     return "<a href='/searchresdetails.php?arg={$enc}' title='search result details'>{$row_val}</a>";
 }
 
+function make_yes_no($row_val) {
+    if ($row_val == 1) {
+        return "yes";
+    }
+    return "";
+}
+
 
 $runner = new DockerRest\DockerEngineApi();
 list ($ok,$jsonRaw) = $runner->imageSearch($term);
@@ -44,9 +51,9 @@ if (!$ok) {
 $tbl = new base\FmtTable(array(
 
     "name" => array("name", "make_name"),
-    "is_official" => "is_official",
+    "is_official" => array("is_official",  __NAMESPACE__ . "\\make_yes_no"),
     "star_count" => "star_count",
-    "is_automated" => "is_automated",
+    "is_automated" => array("Is Automated?",  __NAMESPACE__ . "\\make_yes_no"),
     "description" => "description"
 ));
 

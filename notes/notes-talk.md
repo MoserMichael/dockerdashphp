@@ -5,15 +5,18 @@ Let's start with an overview of docker :
 Docker allows you to run lightweight containers, a lightweight container is a tool that is simulating the presence of a different computing environment.
 This different environment may be a different operating system or even a different operating system running on a different kind of processor.
 
-For example: I am running on the MacOS with a M1 processor, however I can start a docker container based on a ubuntu docker image for amd64, a process running inside this docker container would think that it is running on the Linux operating system that is running on a 64 bit Intel processor.
+For example: I am running on the MacOS with a M1 processor, however I can start a docker container based on a ubuntu docker image for the 64 bit Intel processor, a process running inside this docker container would think that it is running on the Linux operating system that is running on a 64 bit Intel processor.
 However this is a kind of illusion: a process that is running inside the lightweight container is still using the services of the host operating system. 
-When the process in such a container is making a system call, then the docker runtime is intercepting the system call an translating it into a call to the host operating system.
+When the process in such a container is making a system call, then the docker runtime is intercepting the system call an translating it into a call to the host operating system - thats OSX in my case.
 
+That's very similar to a virtual machine (like KVM), however lightweight containers have a much smaller overhead than virtual machines, on average.
+
+<!--
 Another feature: the process running inside the container is running in isolation from the host operating system, for example a process running inside the container doesn't know anything about processes running outside of the container.
 The container has it's own file system and it doesn't see any of the file handles opened by processes on the host operating system (that's the default behavior).
 The docker runtime is creating the illusion of being on a totally different machine!
+//-->
 
-All this may sound similar to a what a virtual machine like KVM is doing, however lightweight containers are introducing a smaller overhead than virtual machines, on average.
 
 Enough theory, let's run a Linux container that has it's own interactive shell:
 
@@ -32,7 +35,7 @@ A quick look at the command line:
 - --rm          - docker does not keep any information about this container, as it exits.
 
 
-Lets look at the shell: we get the illusion of running as root.
+Lets look at the shell: we get the illusion of running as root, lets' check:
 
 ```
 > # whoami
@@ -65,6 +68,7 @@ On a real machine or virtual machine one would also see common daemon procsses l
 
 ```
 > # stat /.dockerenv
+
 >   File: /.dockerenv
 >   Size: 0         	Blocks: 0          IO Block: 4096   regular empty file
 > Device: 9ah/154d	Inode: 1975379     Links: 1
@@ -115,10 +119,10 @@ alpine                              latest    44dd6f223004   4 weeks ago    7.73
 ```
 
 
-Remember that each docker image is a big archive file. This archive contains the file system that is available to the running container and to the docker runtime. The SIZE column tells you the size of the contained file system.
+Remember that each docker image is a kind of big archive file. This archive contains the file system that is available to the running container and to the docker runtime. The SIZE column tells you the size of the contained file system.
  the IMAGE ID - that's a number that identifies this docker image uniquely. The name and tag is an alias to this number, note that the image id may change, if the author of the docker image decides to publish a different build for the same image and tag - this ID is a short form of the sha256 hash computed from the whole content of the image file.
 
-the ```--no-trunc``` options is showing the full image id.
+the ```--no-trunc``` options is showing the full image id - the short IMAGE ID are the fist six bytes of the full image id.
 ```
 docker images --no-trunc
 
@@ -127,8 +131,6 @@ ghcr.io/mosermichael/phpdocker-mm   latest    sha256:588efceade80627169bb859cdcc
 alpine                              latest    sha256:44dd6f2230041eede4ee5e792728313e43921b3e46c1809399391535c0c0183b   4 weeks ago    7.73MB
 alpine                              3.17      sha256:9ed4aefc74f6792b5a804d1d146fe4b4a2299147b0f50eaf2b08435d7b38c27e   2 months ago   7.05MB
 ```
-
-
 
 
 We can also get a list of all docker containers running right now:
@@ -142,23 +144,20 @@ ba2d516a0dbc   ubuntu:latest                              "bash"                
 
 Each container has a STATUS - this one is Up, that mans it is running right now. 
 
-The IMAGE column is listing the REPOSITORY and TAG of the docker image used to create this container instance. You can refer to a docker image by the combination of REPOSITORY and TAG or via the IMAGE ID, some people prefer to use the full IMAGE ID over the short form, in order to avoid the small chance of collisions - remember that the short ID are the first six bytes of the full IMAGE ID.
+The IMAGE column is listing the REPOSITORY and TAG of the docker image used to create this container instance. You can refer to a docker image by the combination of REPOSITORY and TAG or via the IMAGE ID, some people prefer to use the full IMAGE ID over the short form, in order to avoid the small chance of collisions - remember that the short ID are the first six bytes of the full IMAGE ID - they say that is enough to prevent collisions of the short and the long ID value.
 
 The STATUS column tells us that this container is Up and running.
 
 The CREATED column tells you the uptime of the container, how long that container is already running.
 
-The COMMAND column is the name main command that was used to start the container, this is the main process of the container. The container stops when this main process has stopped.
+The COMMAND column is the name main command that was used to start the container, this is the main process of the container. The container stops running when this main process has stopped.
 
 Each running container instance is identified by a unique id listed in the CONTAINER ID column, you can either use this ID or the NAME of the container - as listed in the NAMES column. Note that we didn't set a name for this container with the docker run command, therefore the docker runtime is making up a name for the container on it's own.
 
 The container id is used to controll the container by means of the docker command line  
 
-```
 
 > docker pause ba2d516a0dbc
-
-```
 
 We just paused the container: when you switch back to the console of the container: it now doesn't react to any keystrokes, you can't enter any commands, everything is frozen.
 
@@ -188,7 +187,6 @@ The container stops to run as follows:
 ```
 
 Note that the container now longer appears in the list of running containers, that's due to the ```--rm``` option passed to docker run - the container object is removed just as it exited.
-
 A container is stopped when the main process running in the container stops - that is the process created via the command passed to the docker run command .
 
 For example this is happeneing if I start the same container again, and then just exit from the shell
@@ -248,12 +246,12 @@ No more entries of stopped containers.
 Ok, that was an intro to docker, now let's look at my docker dashboard project, the dashboard gives you a different way to access the functionality of the docker command line tool.
 I want to show you how to use the dashboard, but I will also show the equivalent docker CLI commands for each action.
 
-- Let's download the script for starting the dashboard:
+- Let's download the script for starting the dashboard (this command appears in the description of this video)
 ```
     curl https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh >run-in-docker.sh    
 ```
 
-- First, let's make this script runnable. 
+- let's make this script runnable. 
 
 ```
     chmod +x ./run-in-docker.sh
@@ -296,8 +294,6 @@ It shows us a plenty of information in json format, displayed in a more readable
     First you have the full Id, written as a sha256 hash value - this value can stand in for the docker name or the short id (using the full id can be of benefit, as it would 
 
     - it is actually better to use the full id, instead of the short one - this would avoid possible conincidences of the short id - which is an abridged version of the full id.
-
-
 
 
 That one is equivalent to running the command 
@@ -343,7 +339,7 @@ Let's check the architecture of the previous image: amd64 - as requested.
 
 Now lets run the container: don't worry, docker can run both images, both with native cpu  architecture, which is arm64, and with amd64 - that's the 64 bit Intel CPU architecture. 
 
-Now docker will run the Intel image by means of the open source QEMU emulator, so that docker will need more memory and time for the non native architecture, as it has to translate all of the instructions on the fly, as the container is running the binary for the first time, this is called dynamic binary translation!
+Now docker will run the Intel image by means of the open source QEMU emulator, so that docker will need more memory and time for the non native architecture, as it has to translate all of the Intel 64 instructions on the fly into arm instruction, as the container is running the binary for the first time. This is called dynamic binary translation!
 
 ----
 
@@ -399,24 +395,29 @@ docker exec -it  /myenv sh
 However the dashboard is more persistent in its effort - for example: if the docker container doesn't have a shell in it's file system then the dashboard copies the executable of a shell into the docker containers filesystem and then it tries again.
 
 
+Let's learn about the file system of a docker container: 
+
+
 ```
 ====
 ====
 ====
 ```
 
-Let's look at some additional features:
+Learning stuff about docker:
 
 
 # docker ps by talking to the doccker daemon via it's domain socket
 
 curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/json | jq . | less
 
-# this one also adds "SizeRootFs" to the json output - like docker ps -a 
+# this one also adds "SizeRootFs" to the json output - 
 
 curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/json?size=true | jq . | less
 
+        SizeRootFs is the total size of all the files in the container, in bytes. 
 
+        SizeRw is the size of the files which have been created or changed
 
 https://github.com/docker/docs/issues/1520
 
@@ -480,4 +481,10 @@ docker id
         - The "digest" is a hash of the manifest, introduced in Docker registry v2.
         - The image ID is a hash of the local image JSON configuration.
 
-//-->
+
+??? what about syslog on a docker container, that's a user mode daemon, but I can't see it in ps. How do they do that ???
+
+
+??? is it possible to obtain files from the file system of a stopped docker container ???
+
+
