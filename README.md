@@ -8,7 +8,7 @@ The server runs on OSX, Linux and on Windows with the Linux subsystem
 
 ## Running the server in a docker container
 
-- Download the following bash script ```curl https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh >run-in-docker.sh``` (or via link [run-in-docker.sh](https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh) )
+- Download the following bash script ```curl https://raw.githubusercontent.com/MoserMichael/dockerdashphp/main/run-in-docker.sh >run-in-docker.sh``` (or via link [run-in-docker.sh](https://raw.githubusercontent.com/MoserMichael/dockerdashphp/main/run-in-docker.sh) )
 - ```chmod +x ./run-in-docker.sh```
 
 ### Running the server with TLS / with a self signed certificate

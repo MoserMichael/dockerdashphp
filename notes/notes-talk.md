@@ -1,4 +1,5 @@
-I am going to show you my side project, it's a docker dashboard, it helps to work with docker from inside a web browser.
+I am going to show you my side project, it's a docker dashboard, you can access the dashboard from a web browser
+
 
 Let's start with an overview of docker :
 
@@ -248,7 +249,7 @@ I want to show you how to use the dashboard, but I will also show the equivalent
 
 - Let's download the script for starting the dashboard (this command appears in the description of this video)
 ```
-    curl https://raw.githubusercontent.com/MoserMichael/phpexercise/main/run-in-docker.sh >run-in-docker.sh    
+    curl https://raw.githubusercontent.com/MoserMichael/dockerdashphp/main/run-in-docker.sh >run-in-docker.sh    
 ```
 
 - let's make this script runnable. 
