@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -x
 
 # from https://stackoverflow.com/questions/360201/how-do-i-kill-background-processes-jobs-when-my-shell-script-exits
 # without cleanup up the mess: the container will remain, if stopped - despite running docker --rm !!!
@@ -27,7 +27,13 @@ fi
 rm -f /etc/apache2/sites-enabled/000-default.conf
 
 export APP_ROOT=/var/www/html
-php /var/www/wss-src/wssrv.php "${PORT_WSS}" &
+
+while true;
+do
+    # restart on failure
+    php /var/www/wss-src/wssrv.php "${PORT_WSS}"
+done
+
 WSS_PID=$!
 
 trap "trap - SIGTERM; kill -9 ${WSS_PID}; apachectl -k stop || true; kill -9 0; exit 0" SIGINT SIGTERM EXIT
