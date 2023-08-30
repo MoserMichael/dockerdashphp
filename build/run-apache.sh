@@ -7,7 +7,7 @@ set -x
 #trap "exit" INT TERM
 #trap "kill 0" EXIT
 
-PORT_WSS="${PORT_WSS:=8002}"
+export PORT_WSS="${PORT_WSS:=8002}"
 export TRACE="${TRACE}"
 
 # account for php needs to acccess the pipe for communication with docker
@@ -28,11 +28,7 @@ rm -f /etc/apache2/sites-enabled/000-default.conf
 
 export APP_ROOT=/var/www/html
 
-while true;
-do
-    # restart on failure
-    php /var/www/wss-src/wssrv.php "${PORT_WSS}"
-done
+bash -c 'while [ true ]; do php /var/www/wss-src/wssrv.php "${PORT_WSS}"; done' &
 
 WSS_PID=$!
 
