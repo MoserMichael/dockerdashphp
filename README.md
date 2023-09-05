@@ -31,7 +31,7 @@ Use of TLS with a self signed certificate means that all of the communication is
 
 How to use this stuff, after cloning this repository:
 
-- make sure that php-7.4 and composer are installed
+- make sure that php-8.2 and composer are installed
 - run ```make install``` - this installs the php modules with composer
 - Run the server with ```make run```, this runs php as a local web server on port 8010 and port 8011 (for debugging purposes only)
 - On the same machine: use your browser and navigate to http://localhost:8010/images.php
