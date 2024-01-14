@@ -248,7 +248,7 @@ class DockerEngineApi extends HttpHandler {
     //*** list images
     public function imageList($show_all = true) {
         $ver = self::$dockerApiVersion;
-        $url = "/{$ver}/images/json?all=${show_all}&shared-size=true&digests=true";
+        $url = "/{$ver}/images/json?all={$show_all}&shared-size=true&digests=true";
 
         return $this->sendCommonRequest($url, null, 200, self::MethodGet);
     }
