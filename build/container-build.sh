@@ -5,7 +5,7 @@ set -ex
 CMD=$1
 
 
-if  [[ $CMD != "nopush" ]]; then
+if  [[ "$CMD" != "nopush" ]]; then
 
     if [[ $GITHUB_TOKEN == "" ]]; then
         echo "GITHUB_TOKEN env is not defined"

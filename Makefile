@@ -33,4 +33,7 @@ container-build-no-push:
 	#git clean -f -d
 	./build/container-build.sh no-push 2>&1 | tee container-build.log
 
+container-build-old:
+	docker build -f Dockerfile -t ghcr.io/mosermichael/phpdocker-mm:latest . 2>&1 | tee container-build.log
+
 

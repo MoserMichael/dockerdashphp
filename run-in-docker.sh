@@ -23,10 +23,10 @@ Start the web server
 
 -r          - start the web server
 -p  <port>  - listening base port (default ${PORT} )
+-w          - require credentials for web server 
 -t          - tls with self signed certificate
 -b <addr>   - bind address (default ${HOST})
 Stop the web server 
-
 -s          - stop the web server
 
 Common options:
@@ -41,14 +41,20 @@ exit 1
 
 SSL="off"
 TRACE=0
+ADD_OPT=""
+ENTER_CRED=0
 
-while getopts "hvdrstp:b:" opt; do
+while getopts "hwvdrstp:b:" opt; do
   case ${opt} in
     h)
         Help
         ;;
     r)
         ACTION="start"
+        ;;
+
+    w)
+        ENTER_CRED=1
         ;;
     b)
         HOST="$OPTARG"
@@ -77,6 +83,26 @@ while getopts "hvdrstp:b:" opt; do
         ;;
    esac
 done
+
+function enter_cred {
+    if [[ "$ENTER_CRED" == "1" ]]; then
+        echo "Enter password required for access"
+        echo -n "Username: "
+        read usern
+        echo -n "Password: "
+        read -s pword
+
+        cred=$(printf "${usern}\n${pword}")
+
+        for (( i=0; i<${#cred}; i++ )); do
+          ch=${cred:$i:1}
+          ch=$(printf '%u' "'$ch")
+          ch=$(($ch ^ 42))
+          ADD_OPT="${ADD_OPT}${ch}"
+        done
+        echo -n "$ADD_OPT" >./pw.txt
+    fi
+}
 
 function assert_bins_in_path {
   if [[ -n $ZSH_VERSION ]]; then
@@ -124,12 +150,14 @@ if [[ $ACTION == 'start' ]]; then
 
     check_docker_engine_running
     clean_if_stopped
+    enter_cred
  
     D="$(docker version --format='{{json .Client.APIVersion}}')"
  
     export DOCKER_API_VERSION="v${D//\"/}"
 
-    docker run -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p ${HOST_BIND}${PORT}:${INTERNAL_PORT} -e MODE="${MODE}" -e HOST="${HOST}" -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} -l docker-php-admin --rm -dt ${IMAGE_LOCATION}
+    docker run -v $PWD:/mnt/cwd -v /var/run/docker.sock:/var/run/docker.sock --name docker-php-admin -p ${HOST_BIND}${PORT}:${INTERNAL_PORT} -e MODE="${MODE}" -e HOST="${HOST}" -e DOCKER_API_VERSION=${DOCKER_API_VERSION} -e PORT_PHP=${PORT} -e PORT_WSS=${NEXT_PORT} -e TRACE=${TRACE} -l docker-php-admin --rm -dt ${IMAGE_LOCATION}
+    
     if [[ $? == 0 ]]; then
         echo "Listen on ${MODE_TITLE}://${HOST}:${PORT}"
     fi

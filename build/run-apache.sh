@@ -13,6 +13,11 @@ export TRACE="${TRACE}"
 # account for php needs to acccess the pipe for communication with docker
 chown www-data:www-data /var/run/docker.sock
 
+if [[ -f /mnt/cwd/pw.txt ]]; then
+    mv /mnt/cwd/pw.txt /pw.txt
+    rm -f /mnt/cwd/pw.txt
+fi
+
 if [[ "$MODE" == "self-signed" ]]; then 
 
   CERT="/etc/ssl/certs/ssl-cert-snakeoil.pem"
