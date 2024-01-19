@@ -43,6 +43,7 @@ SSL="off"
 TRACE=0
 ADD_OPT=""
 ENTER_CRED=0
+DISPLAY_HOST="localhost"
 
 while getopts "hwvdrstp:b:" opt; do
   case ${opt} in
@@ -59,6 +60,7 @@ while getopts "hwvdrstp:b:" opt; do
     b)
         HOST="$OPTARG"
         HOST_BIND="${OPTARG}:"
+        DISPLAY_HOST=${HOST_BIND}
         ;;
     t)
         MODE=self-signed
@@ -160,6 +162,7 @@ if [[ $ACTION == 'start' ]]; then
     
     if [[ $? == 0 ]]; then
         echo "Listen on ${MODE_TITLE}://${HOST}:${PORT}"
+        echo "Listen on ${MODE_TITLE}://${DISPLAY_HOST}:${PORT}"
     fi
 else 
   if [[ $ACTION == 'stop' ]]; then
