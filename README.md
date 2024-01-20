@@ -10,7 +10,13 @@ The server runs on OSX, Linux and on Windows with the Linux subsystem
 
 - Download the following bash script ```curl https://raw.githubusercontent.com/MoserMichael/dockerdashphp/main/run-in-docker.sh >run-in-docker.sh``` (or via link [run-in-docker.sh](https://raw.githubusercontent.com/MoserMichael/dockerdashphp/main/run-in-docker.sh) )
 - ```chmod +x ./run-in-docker.sh```
+- you may need to make docker accessible to the current user. 
+    - On Linux (or Windows subsystem for Linux), or OSX run ```sudo setfacl -m user:$USER:rw /var/run/docker.sock```
+    - on OSX run ```chmod g+w /var/run/docker.sock``` 
+  
 
+
+ 
 ### Running the server with TLS / with a self signed certificate
 
 - ```./run-in-docker.sh -r -t -p 9000``` This starts the local web server for this tool in the docker and uses ports 9000 
