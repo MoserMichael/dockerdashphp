@@ -50,8 +50,10 @@ How to use this stuff, after cloning this repository:
 
 I wrote this project in order to pick up some working knowledge of PHP, I think that it's much easier to learn from hands-on projects..
 
+<!--
 I started to use the php test server, with this exercise. Conventional wisdom says that this is a single threaded web server only, but o wonder - " You can configure the built-in webserver to fork multiple workers in order to test code that requires multiple concurrent requests to the built-in webserver. Set the PHP_CLI_SERVER_WORKERS environment variable to the number of desired workers before starting the server. This is not supported on Windows. ". See [here](https://www.php.net/manual/en/features.commandline.webserver.php).
 However this trick has it's limits: you can't have TLS with the php test server.
+//-->
 
 Another detail learned so far: at first I did this exercise by means of invoking the docker command line. 
 Therefore I ran $(docker exec -ti <docker_id> /bin/bash) and passed the process pipes for the stdin/stdout/stderr streams.
@@ -61,7 +63,7 @@ I could solve this by switching to the "docker engine api" - https://docs.docker
 Interesting detail: ```curl``` can send http requests via a unix domain socket (the docker cli is sending REST requests to the the docker daemon via a unix domain socket), didn't know that:
 The [example](https://docs.docker.com/engine/api/sdk/examples/) shows the following way to do ```docker ps``` : ```curl --unix-socket /var/run/docker.sock http://localhost/v1.41/containers/json```
 
-It is possible to run the tool in a docker container, igven hat the docker engine api is used for all commands (that's because I can mount the unix socket /var/run/docker.sock into the file system of the docker).
+It is possible to run the tool in a docker container, given hat the docker engine api is used for all commands (that's because I can mount the unix socket /var/run/docker.sock into the file system of the docker).
 
 Another amazing fact: it turns out that the [same origin policy](https://en.wikipedia.org/wiki/Same-origin_policy) does not apply to web sockets!!! I think that's quite amazing, would like to learn more on this exception.
 
