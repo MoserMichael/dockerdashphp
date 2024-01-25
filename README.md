@@ -7,7 +7,7 @@ You can also attach and run a shell inside a running container, and all of the U
 The server runs on OSX, Linux and on Windows with the Linux subsystem
 
 
-[Youtube video on dockerdashphp](https://www.youtube.com/embed/3vnq1ltptZA?si=e1DQs_TVOcVmillX&amp;start=2)
+[Youtube video on dockerdashphp](https://www.youtube.com/watch?v=3vnq1ltptZA&t=2s)
 
 
 ## Running the server in a docker container
