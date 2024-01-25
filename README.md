@@ -9,6 +9,8 @@ The server runs on OSX, Linux and on Windows with the Linux subsystem
 
 [Youtube video on dockerdashphp](https://www.youtube.com/watch?v=3vnq1ltptZA&t=2s)
 
+[<img src="https://i.ytimg.com/vi/3vnq1ltptZA/maxresdefault.jpg" width="50%">]( https://www.youtube.com/watch?v=3vnq1ltptZA&t=2s "dockerdashphp - a web application for managing your local docker engine: 55")
+
 
 ## Running the server in a docker container
 
