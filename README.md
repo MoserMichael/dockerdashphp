@@ -17,7 +17,7 @@ The server runs on OSX, Linux and on Windows with the Linux subsystem
 - Download the following bash script ```curl https://raw.githubusercontent.com/MoserMichael/dockerdashphp/main/run-in-docker.sh >run-in-docker.sh``` (or via link [run-in-docker.sh](https://raw.githubusercontent.com/MoserMichael/dockerdashphp/main/run-in-docker.sh) )
 - ```chmod +x ./run-in-docker.sh```
 - you may need to make docker accessible to the current user. 
-    - On Linux (or Windows subsystem for Linux), or OSX run ```sudo setfacl -m user:$USER:rw /var/run/docker.sock```
+    - On Linux (or Windows subsystem for Linux) run ```sudo setfacl -m user:$USER:rw /var/run/docker.sock``` (for Ubuntu: ```setfacl``` is in the ```acl``` package - ```sudo apt-get install acl```)
     - on OSX run ```chmod g+w /var/run/docker.sock``` 
   
 
